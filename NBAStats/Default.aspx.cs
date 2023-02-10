@@ -23,25 +23,25 @@ namespace NBAStats
 
         }
 
-        protected void butSearch_Click(object sender, EventArgs e)
+        protected void butProcurar_Click(object sender, EventArgs e)
         {
             try
             {
-                lblPlayerNameRequired.Visible = false;
+                lblNomeJogadorObrigatorio.Visible = false;
                 lblQuantJogosObrigatorio.Visible = false;
                 lblMinMinutosValido.Visible = false;
 
-                var playerName = txtPlayerName.Text;
+                var playerName = txtNomeJogador.Text;
                 var quantJogos = txtQuantJogos.Text;
 
                 if (string.IsNullOrEmpty(playerName))
                 {
-                    lblPlayerNameRequired.Visible = true;
+                    lblNomeJogadorObrigatorio.Visible = true;
                     return;
                 }
                 else
                 {
-                    lblPlayerNameRequired.Visible = false;
+                    lblNomeJogadorObrigatorio.Visible = false;
                 }
 
                 if (string.IsNullOrEmpty(quantJogos) || quantJogos.Any(x => char.IsLetter(x)))
@@ -224,8 +224,8 @@ namespace NBAStats
                 Jogador.Partidas.Add(partida);
             }
 
-            dgGames.DataSource = Jogador.Partidas;
-            dgGames.DataBind();
+            dgPartidas.DataSource = Jogador.Partidas;
+            dgPartidas.DataBind();
 
             ProcessarMedias();
 
@@ -253,8 +253,8 @@ namespace NBAStats
 
             dt.Rows.Add(dr);
 
-            dgAverages.DataSource = dt;
-            dgAverages.DataBind();
+            dgMedias.DataSource = dt;
+            dgMedias.DataBind();
         }
 
         private void ProcessarCoeficienteVariacao(Media media)
@@ -306,7 +306,7 @@ namespace NBAStats
             }
         }
 
-        protected void dgAverages_ItemDataBound(object sender, DataGridItemEventArgs e)
+        protected void dgMedias_ItemDataBound(object sender, DataGridItemEventArgs e)
         {
             if (e.Item.ItemType == ListItemType.Item)
             {

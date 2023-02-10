@@ -2,9 +2,9 @@
 
 <asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
     <div>
-        <asp:Label ID="lblPlayerName" runat="server" Text="Nome Jogador: " />
-        <asp:TextBox ID="txtPlayerName" runat="server" />
-        <asp:Label ID="lblPlayerNameRequired" runat="server" Text="The player name is required!" ForeColor="Red" Visible="false" />
+        <asp:Label ID="lblNomeJogador" runat="server" Text="Nome Jogador: " />
+        <asp:TextBox ID="txtNomeJogador" runat="server" />
+        <asp:Label ID="lblNomeJogadorObrigatorio" runat="server" Text="O nome do jogador é obrigatório!" ForeColor="Red" Visible="false" />
     </div>
 
     <div>
@@ -20,11 +20,11 @@
     </div>
 
     <div>
-        <asp:Button ID="butSearch" runat="server" Text="Search" OnClick="butSearch_Click" />
+        <asp:Button ID="butProcurar" runat="server" Text="Procurar" OnClick="butProcurar_Click" />
     </div>
 
     <div>
-        <asp:DataGrid ID="dgGames" runat="server" AutoGenerateColumns="false">
+        <asp:DataGrid ID="dgPartidas" runat="server" AutoGenerateColumns="false">
             <Columns>
                 <asp:TemplateColumn HeaderText="Data">
                     <ItemTemplate>
@@ -197,11 +197,9 @@
     </div>
 
     <div>
-        <asp:DataGrid ID="dgAverages" runat="server" OnItemDataBound="dgAverages_ItemDataBound" AutoGenerateColumns="false">
+        <asp:DataGrid ID="dgMedias" runat="server" OnItemDataBound="dgMedias_ItemDataBound" AutoGenerateColumns="false">
             <Columns>
                 <asp:TemplateColumn HeaderText="Cestas de 3">
-                    <HeaderStyle HorizontalAlign="Center" VerticalAlign="Middle"/>
-                    <ItemStyle HorizontalAlign="Center" VerticalAlign="Middle"/>
                     <ItemTemplate>
                         <div>
                             <asp:Label runat="server" ID="lblAvgCestas3Feitas" Text='<%# DataBinder.Eval(Container, "DataItem.Cestas3Feitas") %>' />
@@ -212,7 +210,6 @@
             </Columns>
             <Columns>
                 <asp:TemplateColumn HeaderText="Rebotes">
-                    <ItemStyle HorizontalAlign="Center" VerticalAlign="Middle"/>
                     <ItemTemplate>
                         <div>
                             <asp:Label runat="server" ID="lblAvgRebotes" Text='<%# DataBinder.Eval(Container, "DataItem.Rebotes") %>' />
@@ -223,7 +220,6 @@
             </Columns>
             <Columns>
                 <asp:TemplateColumn HeaderText="Assistências">
-                    <ItemStyle HorizontalAlign="Center" VerticalAlign="Middle"/>
                     <ItemTemplate>
                         <div>
                             <asp:Label runat="server" ID="lblAvgAssistencias" Text='<%# DataBinder.Eval(Container, "DataItem.Assistencias") %>' />

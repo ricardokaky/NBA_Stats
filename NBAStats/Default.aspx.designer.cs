@@ -15,31 +15,31 @@ namespace NBAStats
     {
 
         /// <summary>
-        /// Controle lblPlayerName.
+        /// Controle lblNomeJogador.
         /// </summary>
         /// <remarks>
         /// Campo gerado automaticamente.
         /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblPlayerName;
+        protected global::System.Web.UI.WebControls.Label lblNomeJogador;
 
         /// <summary>
-        /// Controle txtPlayerName.
+        /// Controle txtNomeJogador.
         /// </summary>
         /// <remarks>
         /// Campo gerado automaticamente.
         /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtPlayerName;
+        protected global::System.Web.UI.WebControls.TextBox txtNomeJogador;
 
         /// <summary>
-        /// Controle lblPlayerNameRequired.
+        /// Controle lblNomeJogadorObrigatorio.
         /// </summary>
         /// <remarks>
         /// Campo gerado automaticamente.
         /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblPlayerNameRequired;
+        protected global::System.Web.UI.WebControls.Label lblNomeJogadorObrigatorio;
 
         /// <summary>
         /// Controle lblQuantJogos.
@@ -96,31 +96,31 @@ namespace NBAStats
         protected global::System.Web.UI.WebControls.Label lblMinMinutosValido;
 
         /// <summary>
-        /// Controle butSearch.
+        /// Controle butProcurar.
         /// </summary>
         /// <remarks>
         /// Campo gerado automaticamente.
         /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button butSearch;
+        protected global::System.Web.UI.WebControls.Button butProcurar;
 
         /// <summary>
-        /// Controle dgGames.
+        /// Controle dgPartidas.
         /// </summary>
         /// <remarks>
         /// Campo gerado automaticamente.
         /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.DataGrid dgGames;
+        protected global::System.Web.UI.WebControls.DataGrid dgPartidas;
 
         /// <summary>
-        /// Controle dgAverages.
+        /// Controle dgMedias.
         /// </summary>
         /// <remarks>
         /// Campo gerado automaticamente.
         /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.DataGrid dgAverages;
+        protected global::System.Web.UI.WebControls.DataGrid dgMedias;
 
         /// <summary>
         /// Controle lblDoubleDouble.
