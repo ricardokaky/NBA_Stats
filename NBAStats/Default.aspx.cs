@@ -2,11 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Net;
+using System.Data;
 
 namespace NBAStats
 {
@@ -14,9 +13,9 @@ namespace NBAStats
     {
         private HtmlWeb Client = new HtmlWeb();
         private HtmlDocument Html;
-        private HtmlDocument PlayerHtml;
-        private List<HtmlNode> PlayerStats;
-        private Player Player;
+        private HtmlDocument JogadorHtml;
+        private List<HtmlNode> JogadorStats;
+        private Jogador Jogador;
         private int QuantJogos;
 
         protected void Page_Load(object sender, EventArgs e)
@@ -28,9 +27,9 @@ namespace NBAStats
         {
             try
             {
-                //trocar de textbox para um select com a lista dos nomes dos jogadores
                 lblPlayerNameRequired.Visible = false;
                 lblQuantJogosObrigatorio.Visible = false;
+                lblMinMinutosValido.Visible = false;
 
                 var playerName = txtPlayerName.Text;
                 var quantJogos = txtQuantJogos.Text;
@@ -55,29 +54,39 @@ namespace NBAStats
                     lblQuantJogosObrigatorio.Visible = false;
                 }
 
+                if (txtMinMinutos.Text.Any(x => char.IsLetter(x)))
+                {
+                    lblMinMinutosValido.Visible = true;
+                    return;
+                }
+                else
+                {
+                    lblMinMinutosValido.Visible = false;
+                }
+
                 QuantJogos = Convert.ToInt32(quantJogos);
 
-                if (!AccessSite())
+                if (!AcessarSite())
                 {
                     return;
                 }
 
-                if (!SearchPlayer(playerName))
+                if (!ProcurarJogador(playerName))
                 {
                     return;
                 }
 
-                if (!AccessPlayerPage(playerName))
+                if (!AcessarPaginaJogador(playerName))
                 {
                     return;
                 }
 
-                if (!SearchPlayerStats())
+                if (!ProcurarStatsJogador())
                 {
                     return;
                 }
 
-                ProcessStats();
+                ProcessarStats();
             }
             catch (WebException ex)
             {
@@ -92,7 +101,7 @@ namespace NBAStats
             }
         }
 
-        private bool AccessSite()
+        private bool AcessarSite()
         {
             if (Html == null)
             {
@@ -106,41 +115,36 @@ namespace NBAStats
             return true;
         }
 
-        private bool SearchPlayer(string nomeJogador)
+        private bool ProcurarJogador(string nomeJogador)
         {
             return Html.DocumentNode.SelectSingleNode($"//a[text() = \"{nomeJogador}\"]") != null;
             //"Falha ao procurar pelo jogador!"
         }
 
-        private bool AccessPlayerPage(string nomeJogador)
+        private bool AcessarPaginaJogador(string nomeJogador)
         {
             var link = Html.DocumentNode.SelectSingleNode($"//a[text() = \"{nomeJogador}\"]").Attributes["href"].Value;
             link = link.Replace(".html", "/gamelog/2023").Insert(0, "https://www.basketball-reference.com");
 
-            PlayerHtml = Client.Load(link);
+            JogadorHtml = Client.Load(link);
 
-            Player = new Player
-            {
-                Name = nomeJogador
-            };
+            Jogador = new Jogador(nomeJogador);
 
-            return PlayerHtml.DocumentNode.ChildNodes.Count > 0;
+            return JogadorHtml.DocumentNode.ChildNodes.Count > 0;
             //Falha ao acessar estatísticas do {nomeJogador}!
         }
 
-        private bool SearchPlayerStats()
+        private bool ProcurarStatsJogador()
         {
             //PlayerStats = PlayerHtml.DocumentNode.SelectSingleNode("//section[@class = 'Card gamelogWidget gamelogWidget--basketball']//tbody[@class='Table__TBODY']");
-            PlayerStats = new List<HtmlNode>(PlayerHtml.DocumentNode.SelectNodes("//tbody//tr[@id]").ToList());
-            return PlayerStats.Count > 0;
+            JogadorStats = new List<HtmlNode>(JogadorHtml.DocumentNode.SelectNodes("//tbody//tr[@id]").ToList());
+            return JogadorStats.Count > 0;
             //Falha ao acessar o front das estatísticas!
         }
 
-        private void ProcessStats()
+        private void ProcessarStats()
         {
-            Player.RecentGames = new List<Game>();
-
-            PlayerStats.Reverse();
+            JogadorStats.Reverse();
 
             var lstAttributes = new List<string>()
                 {
@@ -166,33 +170,39 @@ namespace NBAStats
 
             for (int i = 0; i < QuantJogos; i++)
             {
-                var node = PlayerStats[i];
+                var node = JogadorStats[i];
 
                 var childNodes = node.ChildNodes.Where(x => x.Name == "td" && x.Attributes.Where(y => y.Name == "data-stat" && lstAttributes.Contains(y.Value)).Count() > 0).ToList();
 
+                if (!string.IsNullOrEmpty(txtMinMinutos.Text) && Convert.ToInt32(childNodes[3].InnerText.Substring(0, childNodes[3].InnerText.IndexOf(":"))) < Convert.ToInt32(txtMinMinutos.Text))
+                {
+                    QuantJogos++;
+                    continue;
+                }
+
                 var dicStats = new Dictionary<string, string>()
                     {
-                        { "Date", null },
-                        { "Opponent", null },
-                        { "Result", null },
-                        { "Minutes", null },
-                        { "FieldGoalsMade", null },
-                        { "FieldGoalsAttempted", null },
-                        { "TreePointFieldGoalsMade", null },
-                        { "TreePointFieldGoalsAttempted", null },
-                        { "TreePointFieldGoalPercentage", null },
-                        { "FreeThrowsMade", null },
-                        { "FreeThrowsAttempted", null },
-                        { "FreeThrowPercentage", null },
-                        { "Rebounds", null },
-                        { "Assists", null },
-                        { "Steals", null },
-                        { "Blocks", null },
-                        { "Turnovers", null },
-                        { "Points", null }
+                        { "Data", null },
+                        { "Adversario", null },
+                        { "Resultado", null },
+                        { "Minutos", null },
+                        { "FieldGoalsFeitos", null },
+                        { "FieldGoalsTentados", null },
+                        { "Cestas3Feitas", null },
+                        { "Cestas3Tentadas", null },
+                        { "Cestas3Percentual", null },
+                        { "LancesLivresFeitos", null },
+                        { "LancesLivresTentados", null },
+                        { "LancesLivresPercentual", null },
+                        { "Rebotes", null },
+                        { "Assistencias", null },
+                        { "Roubos", null },
+                        { "Bloqueios", null },
+                        { "InversoesPosse", null },
+                        { "Pontos", null }
                     };
 
-                for (int j = 0; j < childNodes.Count; j++)
+                for (int j = 0; j < childNodes.Count(); j++)
                 {
                     string text = childNodes[j].InnerText;
 
@@ -208,57 +218,91 @@ namespace NBAStats
                     dicStats[dicStats.ElementAt(j).Key] = text;
                 }
 
-                var game = new Game();
-                game.FromDictionary(dicStats);
+                var partida = new Partida();
+                partida.DictionaryDePara(dicStats);
 
-                Player.RecentGames.Add(game);
+                Jogador.Partidas.Add(partida);
             }
 
-            dgGames.DataSource = Player.RecentGames;
+            dgGames.DataSource = Jogador.Partidas;
             dgGames.DataBind();
 
-            ProcessAverages();
+            ProcessarMedias();
 
-            ProcessDoubleAndTripleDouble();
+            ProcessarDuploETriploDuplo();
         }
 
-        private void ProcessAverages()
+        private void ProcessarMedias()
         {
-            Player.Averages = new Averages
-            {
-                AvgTreePointFieldGoalsMade = Math.Round(Player.RecentGames.Select(x => x.TreePointFieldGoalsMade).Average(), 1),
-                AvgRebounds = Math.Round(Player.RecentGames.Select(x => x.Rebounds).Average(), 1),
-                AvgAssists = Math.Round(Player.RecentGames.Select(x => x.Assists).Average(), 1),
-                AvgBlocks = Math.Round(Player.RecentGames.Select(x => x.Blocks).Average(), 1),
-                AvgSteals = Math.Round(Player.RecentGames.Select(x => x.Steals).Average(), 1),
-                AvgTurnovers = Math.Round(Player.RecentGames.Select(x => x.Turnovers).Average(), 1),
-                AvgPoints = Math.Round(Player.RecentGames.Select(x => x.Points).Average(), 1),
-                AvgPointsAssistsRebounds = Math.Round(Player.RecentGames.Select(x => x.PointsAssistsRebounds).Average(), 1),
-                AvgPointsAssists = Math.Round(Player.RecentGames.Select(x => x.PointsAssists).Average(), 1),
-                AvgPointsRebounds = Math.Round(Player.RecentGames.Select(x => x.PointsRebounds).Average(), 1),
-                AvgAssistsRebounds = Math.Round(Player.RecentGames.Select(x => x.AssistsRebounds).Average(), 1),
-                AvgStealsBlocks = Math.Round(Player.RecentGames.Select(x => x.StealsBlocks).Average(), 1)
-            };
+            DataTable dt = new DataTable();
 
-            List<Averages> lstAverages = new List<Averages>()
+            foreach (var media in Jogador.Medias)
             {
-                Player.Averages
-            };
+                dt.Columns.Add(media.Nome);
+            }
 
-            dgAverages.DataSource = lstAverages;
+            DataRow dr = dt.NewRow();
+
+            for (int i = 0; i < Jogador.Medias.Count(); i++)
+            {
+                Jogador.Medias[i].Valor = Math.Round(Jogador.Partidas.Select(y => (int)y.GetType().GetProperty(Jogador.Medias[i].Nome).GetValue(y)).Average(), 1);
+                ProcessarCoeficienteVariacao(Jogador.Medias[i]);
+
+                dr[i] = Jogador.Medias[i].Valor;
+            }
+
+            dt.Rows.Add(dr);
+
+            dgAverages.DataSource = dt;
             dgAverages.DataBind();
         }
 
-        private void ProcessDoubleAndTripleDouble()
+        private void ProcessarCoeficienteVariacao(Media media)
         {
-            if (Player.RecentGames.Where(x => x.DoubleAndTripleDouble >= 3).Count() >= Player.RecentGames.Count() / 2)
+            double variancia = 0;
+
+            foreach (var value in Jogador.Partidas.Select(x => x.GetType().GetProperty(media.Nome).GetValue(x)))
             {
-                lblDoubleDouble.Visible = true;
-                lblTripleDouble.Visible = true;
+                variancia += Math.Pow((Convert.ToDouble(value) - media.Valor), 2);
             }
-            else if (Player.RecentGames.Where(x => x.DoubleAndTripleDouble >= 2).Count() >= Player.RecentGames.Count() / 2)
+
+            double desvioPadrao = Math.Sqrt(variancia / (Jogador.Partidas.Count() - 1));
+
+            media.CoeficienteVariacao = Math.Round((desvioPadrao / media.Valor) * 100, 2);
+        }
+
+        private void ProcessarDuploETriploDuplo()
+        {
+            lblDoubleDouble.Visible = true;
+            lblTripleDouble.Visible = true;
+
+            double porcentDuploDuplo = (Jogador.Partidas.Where(x => x.DuploDuplo).Count() * 100) / Jogador.Partidas.Count();
+            double porcentTriploDuplo = (Jogador.Partidas.Where(x => x.TriploDuplo).Count() * 100) / Jogador.Partidas.Count();
+
+            if (porcentDuploDuplo <= 40)
             {
-                lblDoubleDouble.Visible = true;
+                lblDoubleDouble.ForeColor = System.Drawing.Color.Red;
+            }
+            else if (porcentDuploDuplo > 40 && porcentDuploDuplo <= 60)
+            {
+                lblDoubleDouble.ForeColor = System.Drawing.Color.Blue;
+            }
+            else
+            {
+                lblDoubleDouble.ForeColor = System.Drawing.Color.LightGreen;
+            }
+
+            if (porcentTriploDuplo <= 40)
+            {
+                lblTripleDouble.ForeColor = System.Drawing.Color.Red;
+            }
+            else if (porcentTriploDuplo > 40 && porcentTriploDuplo <= 60)
+            {
+                lblTripleDouble.ForeColor = System.Drawing.Color.Blue;
+            }
+            else
+            {
+                lblTripleDouble.ForeColor = System.Drawing.Color.LightGreen;
             }
         }
 
@@ -266,28 +310,15 @@ namespace NBAStats
         {
             if (e.Item.ItemType == ListItemType.Item)
             {
-                foreach (PropertyInfo property in Player.Averages.GetType().GetProperties())
+                foreach (Media media in Jogador.Medias)
                 {
-                    Label lblAverage = (Label)e.Item.FindControl(property.Name);
+                    Label lblAverage = (Label)e.Item.FindControl("lblAvg" + media.Nome);
 
-                    double average = Convert.ToDouble(property.GetValue(Player.Averages));
-
-                    double variancia = 0;
-
-                    foreach (var value in Player.RecentGames.Select(x => x.GetType().GetProperty(property.Name.Replace("Avg", "")).GetValue(x)))
-                    {
-                        variancia += Math.Pow((Convert.ToDouble(value) - average), 2);
-                    }
-
-                    double desvioPadrao = Math.Sqrt(variancia / (Player.RecentGames.Count() - 1));
-
-                    double coefVariacao = (desvioPadrao / average) * 100;
-
-                    if (average < 1 || coefVariacao > 30)
+                    if (media.Valor < 1 || media.CoeficienteVariacao > 30)
                     {
                         lblAverage.ForeColor = System.Drawing.Color.Red;
                     }
-                    else if (coefVariacao > 15 && coefVariacao <= 30)
+                    else if (media.CoeficienteVariacao > 15 && media.CoeficienteVariacao <= 30)
                     {
                         lblAverage.ForeColor = System.Drawing.Color.Blue;
                     }
@@ -295,6 +326,9 @@ namespace NBAStats
                     {
                         lblAverage.ForeColor = System.Drawing.Color.LightGreen;
                     }
+
+                    Label coefMedia = (Label)e.Item.FindControl("coefAvg" + media.Nome);
+                    coefMedia.Text = $"({media.CoeficienteVariacao})";
                 }
             }
         }

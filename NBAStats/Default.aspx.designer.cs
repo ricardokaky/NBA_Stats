@@ -69,6 +69,33 @@ namespace NBAStats
         protected global::System.Web.UI.WebControls.Label lblQuantJogosObrigatorio;
 
         /// <summary>
+        /// Controle lblMinMinutos.
+        /// </summary>
+        /// <remarks>
+        /// Campo gerado automaticamente.
+        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblMinMinutos;
+
+        /// <summary>
+        /// Controle txtMinMinutos.
+        /// </summary>
+        /// <remarks>
+        /// Campo gerado automaticamente.
+        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtMinMinutos;
+
+        /// <summary>
+        /// Controle lblMinMinutosValido.
+        /// </summary>
+        /// <remarks>
+        /// Campo gerado automaticamente.
+        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblMinMinutosValido;
+
+        /// <summary>
         /// Controle butSearch.
         /// </summary>
         /// <remarks>
