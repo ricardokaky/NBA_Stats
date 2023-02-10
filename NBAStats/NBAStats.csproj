@@ -243,6 +243,8 @@
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\Site.css" />
+    <Content Include="Controles\ucMedias.ascx" />
+    <Content Include="Controles\ucPartidas.ascx" />
     <Content Include="Default.aspx" />
     <Content Include="favicon.ico" />
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
@@ -293,6 +295,20 @@
   <ItemGroup>
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="Controles\ucMedias.ascx.cs">
+      <DependentUpon>ucMedias.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Controles\ucMedias.ascx.designer.cs">
+      <DependentUpon>ucMedias.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Controles\ucPartidas.ascx.cs">
+      <DependentUpon>ucPartidas.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Controles\ucPartidas.ascx.designer.cs">
+      <DependentUpon>ucPartidas.ascx</DependentUpon>
+    </Compile>
     <Compile Include="Partida.cs" />
     <Compile Include="Media.cs" />
     <Compile Include="Jogador.cs" />

@@ -105,22 +105,22 @@ namespace NBAStats
         protected global::System.Web.UI.WebControls.Button butProcurar;
 
         /// <summary>
-        /// Controle dgPartidas.
+        /// Controle ucPartidas.
         /// </summary>
         /// <remarks>
         /// Campo gerado automaticamente.
         /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.DataGrid dgPartidas;
+        protected global::NBAStats.Controles.ucPartidas ucPartidas;
 
         /// <summary>
-        /// Controle dgMedias.
+        /// Controle ucMedias.
         /// </summary>
         /// <remarks>
         /// Campo gerado automaticamente.
         /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.DataGrid dgMedias;
+        protected global::NBAStats.Controles.ucMedias ucMedias;
 
         /// <summary>
         /// Controle lblDoubleDouble.
