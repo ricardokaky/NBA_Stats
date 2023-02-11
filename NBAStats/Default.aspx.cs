@@ -149,6 +149,7 @@ namespace NBAStats
             var lstAttributes = new List<string>()
                 {
                     "date_game",
+                    "team_id",
                     "opp_id",
                     "game_result",
                     "mp",
@@ -183,6 +184,7 @@ namespace NBAStats
                 var dicStats = new Dictionary<string, string>()
                     {
                         { "Data", null },
+                        { "Time", null },
                         { "Adversario", null },
                         { "Resultado", null },
                         { "Minutos", null },
@@ -223,6 +225,8 @@ namespace NBAStats
 
                 Jogador.Partidas.Add(partida);
             }
+
+            lblTrocaTime.Visible = Jogador.Partidas.Select(x => x.Time).Distinct().Count() > 1;            
 
             ucPartidas.Prepara(Jogador.Partidas);
 

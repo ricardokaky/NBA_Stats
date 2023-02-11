@@ -7,6 +7,7 @@ namespace NBAStats
     public class Partida
     {
         private string mData;
+        private string mTime;
         private string mAdversario;
         private string mResultado;
         private string mMinutos;
@@ -30,11 +31,19 @@ namespace NBAStats
             get { return Convert.ToDateTime(mData).ToString("dd/MM/yyyy"); }
             set { mData = value; }
         }
+
+        public string Time
+        {
+            get { return mTime; }
+            set { mTime = value; }
+        }
+
         public string Adversario
         {
             get { return mAdversario; }
             set { mAdversario = value; }
         }
+
         public string Resultado
         {
             get { return mResultado; }
@@ -46,6 +55,7 @@ namespace NBAStats
             get { return mMinutos.Substring(0, mMinutos.IndexOf(":")); }
             set { mMinutos = value; }
         }
+
         public int FieldGoalsFeitos
         {
             get { return (mFieldGoalsFeitos - mCestas3Feitas); }
