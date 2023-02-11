@@ -44,6 +44,10 @@
         <asp:Button ID="butProcurar" runat="server" Text="Procurar" OnClick="butProcurar_Click" />
     </div>
 
+    <div>
+        <asp:Label runat="server" ID="lblTrocaTime" Text="O JOGADOR TROCOU DE TIME RECENTEMENTE!" ForeColor="Red" Visible="false" />
+    </div>
+
     <uc:Partidas runat="server" ID="ucPartidas" Visible="false" />
 
     <uc:Medias runat="server" ID="ucMedias" Visible="false" />
