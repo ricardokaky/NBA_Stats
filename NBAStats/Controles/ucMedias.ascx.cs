@@ -71,13 +71,32 @@ namespace NBAStats.Controles
             {
                 foreach (Media media in Jogador.Medias)
                 {
+                    int coefRuim;
+                    int coefBom;
+
                     Label lblAverage = (Label)e.Row.FindControl("lblAvg" + media.Nome);
 
-                    if (media.Valor < 1 || media.CoeficienteVariacao > 30)
+                    if (media.Valor > 15)
+                    {
+                        coefRuim = 30;
+                        coefBom = 15;
+                    }
+                    else if (media.Valor > 5 && media.Valor <= 15)
+                    {
+                        coefRuim = 35;
+                        coefBom = 20;
+                    }
+                    else
+                    {
+                        coefRuim = 40;
+                        coefBom = 25;
+                    }
+
+                    if (media.Valor < 1 || media.CoeficienteVariacao > coefRuim)
                     {
                         lblAverage.ForeColor = System.Drawing.Color.Red;
                     }
-                    else if (media.CoeficienteVariacao > 15 && media.CoeficienteVariacao <= 30)
+                    else if (media.CoeficienteVariacao > coefBom && media.CoeficienteVariacao <= coefRuim)
                     {
                         lblAverage.ForeColor = System.Drawing.Color.Blue;
                     }
