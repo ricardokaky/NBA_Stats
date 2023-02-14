@@ -175,7 +175,9 @@ namespace NBAStats
 
                 var childNodes = node.ChildNodes.Where(x => x.Name == "td" && x.Attributes.Where(y => y.Name == "data-stat" && lstAttributes.Contains(y.Value)).Count() > 0).ToList();
 
-                if (!string.IsNullOrEmpty(txtMinMinutos.Text) && Convert.ToInt32(childNodes[3].InnerText.Substring(0, childNodes[3].InnerText.IndexOf(":"))) < Convert.ToInt32(txtMinMinutos.Text))
+                var nodeMinutos = childNodes.Find(x => x.Attributes.Where(y => y.Value == "mp").Count() > 0);
+
+                if (!string.IsNullOrEmpty(txtMinMinutos.Text) && Convert.ToInt32(nodeMinutos.InnerText.Substring(0, nodeMinutos.InnerText.IndexOf(":"))) < Convert.ToInt32(txtMinMinutos.Text))
                 {
                     QuantJogos++;
                     continue;
