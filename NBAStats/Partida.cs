@@ -221,13 +221,17 @@ namespace NBAStats
             get { return mRoubos + mBloqueios; }
         }
 
-        public void DictionaryDePara(Dictionary<string, string> dic)
+        public static Partida DictionaryDePara(Dictionary<string, string> dic)
         {
+            var partida = new Partida();
+
             foreach (var key in dic.Keys)
             {
-                PropertyInfo property = GetType().GetProperty(key);
-                property.SetValue(this, Convert.ChangeType(dic[key].Replace(".", ","), property.PropertyType), null);
+                PropertyInfo property = partida.GetType().GetProperty(key);
+                property.SetValue(partida, Convert.ChangeType(dic[key].Replace(".", ","), property.PropertyType), null);
             }
+
+            return partida;
         }
     }
 }
