@@ -96,6 +96,24 @@ namespace NBAStats
         protected global::System.Web.UI.WebControls.Label lblMinMinutosValido;
 
         /// <summary>
+        /// Controle lblAdversario.
+        /// </summary>
+        /// <remarks>
+        /// Campo gerado automaticamente.
+        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblAdversario;
+
+        /// <summary>
+        /// Controle ddlAdversario.
+        /// </summary>
+        /// <remarks>
+        /// Campo gerado automaticamente.
+        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList ddlAdversario;
+
+        /// <summary>
         /// Controle butProcurar.
         /// </summary>
         /// <remarks>
@@ -114,6 +132,15 @@ namespace NBAStats
         protected global::System.Web.UI.WebControls.Label lblTrocaTime;
 
         /// <summary>
+        /// Controle lblPartidasRecentes.
+        /// </summary>
+        /// <remarks>
+        /// Campo gerado automaticamente.
+        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblPartidasRecentes;
+
+        /// <summary>
         /// Controle ucPartidas.
         /// </summary>
         /// <remarks>
@@ -123,6 +150,15 @@ namespace NBAStats
         protected global::NBAStats.Controles.ucPartidas ucPartidas;
 
         /// <summary>
+        /// Controle lblMediasPartidasRecentes.
+        /// </summary>
+        /// <remarks>
+        /// Campo gerado automaticamente.
+        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblMediasPartidasRecentes;
+
+        /// <summary>
         /// Controle ucMedias.
         /// </summary>
         /// <remarks>
@@ -130,6 +166,42 @@ namespace NBAStats
         /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
         /// </remarks>
         protected global::NBAStats.Controles.ucMedias ucMedias;
+
+        /// <summary>
+        /// Controle lblPartidasContraAdv.
+        /// </summary>
+        /// <remarks>
+        /// Campo gerado automaticamente.
+        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblPartidasContraAdv;
+
+        /// <summary>
+        /// Controle ucPartidasContraAdv.
+        /// </summary>
+        /// <remarks>
+        /// Campo gerado automaticamente.
+        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
+        /// </remarks>
+        protected global::NBAStats.Controles.ucPartidas ucPartidasContraAdv;
+
+        /// <summary>
+        /// Controle lblMediasContraAdv.
+        /// </summary>
+        /// <remarks>
+        /// Campo gerado automaticamente.
+        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblMediasContraAdv;
+
+        /// <summary>
+        /// Controle ucMediasContraAdv.
+        /// </summary>
+        /// <remarks>
+        /// Campo gerado automaticamente.
+        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
+        /// </remarks>
+        protected global::NBAStats.Controles.ucMedias ucMediasContraAdv;
 
         /// <summary>
         /// Controle lblDoubleDouble.

@@ -11,17 +11,35 @@ namespace NBAStats
 {
     public partial class _Default : Page
     {
-        private HtmlWeb Client = new HtmlWeb();
-        private HtmlDocument Html;
-        private HtmlDocument JogadorHtml;
-        private List<HtmlNode> JogadorStats;
-        private Jogador Jogador;
+        private readonly HtmlWeb Client = new HtmlWeb();
+        private static HtmlDocument Html;
+        private static HtmlDocument JogadorHtml;
+        private static List<HtmlNode> JogadorStats;
+        private static Jogador Jogador;
         private int QuantJogos;
-
-        protected void Page_Load(object sender, EventArgs e)
+        private static string NomeJogador;
+        private readonly List<string> lstAtributos = new List<string>()
         {
-
-        }
+            "date_game",
+            "team_id",
+            "opp_id",
+            "game_result",
+            "mp",
+            "fg",
+            "fga",
+            "fg3",
+            "fg3a",
+            "fg3_pct",
+            "ft",
+            "fta",
+            "ft_pct",
+            "trb",
+            "ast",
+            "stl",
+            "blk",
+            "tov",
+            "pts"
+        };
 
         protected void butProcurar_Click(object sender, EventArgs e)
         {
@@ -31,10 +49,10 @@ namespace NBAStats
                 lblQuantJogosObrigatorio.Visible = false;
                 lblMinMinutosValido.Visible = false;
 
-                var playerName = txtNomeJogador.Text;
+                var nomeJogador = txtNomeJogador.Text;
                 var quantJogos = txtQuantJogos.Text;
 
-                if (string.IsNullOrEmpty(playerName))
+                if (string.IsNullOrEmpty(nomeJogador))
                 {
                     lblNomeJogadorObrigatorio.Visible = true;
                     return;
@@ -71,22 +89,29 @@ namespace NBAStats
                     return;
                 }
 
-                if (!ProcurarJogador(playerName))
+                if (NomeJogador != txtNomeJogador.Text)
                 {
-                    return;
-                }
+                    if (!ProcurarJogador(nomeJogador))
+                    {
+                        return;
+                    }
 
-                if (!AcessarPaginaJogador(playerName))
-                {
-                    return;
-                }
+                    if (!AcessarPaginaJogador(nomeJogador))
+                    {
+                        return;
+                    }
 
-                if (!ProcurarStatsJogador())
-                {
-                    return;
+                    if (!ProcurarStatsJogador())
+                    {
+                        return;
+                    }
+
+                    JogadorStats.Reverse();
                 }
 
                 ProcessarStats();
+
+                NomeJogador = txtNomeJogador.Text;
             }
             catch (WebException ex)
             {
@@ -106,7 +131,6 @@ namespace NBAStats
             if (Html == null)
             {
                 Html = Client.Load("https://www.basketball-reference.com/leagues/NBA_2023_advanced.html");
-                //Html = Client.Load("https://www.espn.com/nba/stats/player");
 
                 return Html.DocumentNode.ChildNodes.Count > 0;
                 //"Falha ao acessar site!"
@@ -136,38 +160,39 @@ namespace NBAStats
 
         private bool ProcurarStatsJogador()
         {
-            //PlayerStats = PlayerHtml.DocumentNode.SelectSingleNode("//section[@class = 'Card gamelogWidget gamelogWidget--basketball']//tbody[@class='Table__TBODY']");
             JogadorStats = new List<HtmlNode>(JogadorHtml.DocumentNode.SelectNodes("//tbody//tr[@id]").ToList());
+
             return JogadorStats.Count > 0;
             //Falha ao acessar o front das estatísticas!
         }
 
         private void ProcessarStats()
         {
-            JogadorStats.Reverse();
-
             var lstAttributes = new List<string>()
-                {
-                    "date_game",
-                    "team_id",
-                    "opp_id",
-                    "game_result",
-                    "mp",
-                    "fg",
-                    "fga",
-                    "fg3",
-                    "fg3a",
-                    "fg3_pct",
-                    "ft",
-                    "fta",
-                    "ft_pct",
-                    "trb",
-                    "ast",
-                    "stl",
-                    "blk",
-                    "tov",
-                    "pts"
-                };
+            {
+                "date_game",
+                "team_id",
+                "opp_id",
+                "game_result",
+                "mp",
+                "fg",
+                "fga",
+                "fg3",
+                "fg3a",
+                "fg3_pct",
+                "ft",
+                "fta",
+                "ft_pct",
+                "trb",
+                "ast",
+                "stl",
+                "blk",
+                "tov",
+                "pts"
+            };
+
+            Jogador.Partidas.Clear();
+            Jogador.PartidasContraAdv.Clear();
 
             for (int i = 0; i < QuantJogos; i++)
             {
@@ -183,56 +208,29 @@ namespace NBAStats
                     continue;
                 }
 
-                var dicStats = new Dictionary<string, string>()
-                    {
-                        { "Data", null },
-                        { "Time", null },
-                        { "Adversario", null },
-                        { "Resultado", null },
-                        { "Minutos", null },
-                        { "FieldGoalsFeitos", null },
-                        { "FieldGoalsTentados", null },
-                        { "Cestas3Feitas", null },
-                        { "Cestas3Tentadas", null },
-                        { "Cestas3Percentual", null },
-                        { "LancesLivresFeitos", null },
-                        { "LancesLivresTentados", null },
-                        { "LancesLivresPercentual", null },
-                        { "Rebotes", null },
-                        { "Assistencias", null },
-                        { "Roubos", null },
-                        { "Bloqueios", null },
-                        { "InversoesPosse", null },
-                        { "Pontos", null }
-                    };
-
-                for (int j = 0; j < childNodes.Count(); j++)
-                {
-                    string text = childNodes[j].InnerText;
-
-                    if (string.IsNullOrEmpty(text))
-                    {
-                        text = "0";
-                    }
-                    else if (text.StartsWith("."))
-                    {
-                        text = "0" + text;
-                    }
-
-                    dicStats[dicStats.ElementAt(j).Key] = text;
-                }
-
-                var partida = new Partida();
-                partida.DictionaryDePara(dicStats);
-
-                Jogador.Partidas.Add(partida);
+                Jogador.Partidas.Add(ProcessarPartida(childNodes));
             }
 
-            lblTrocaTime.Visible = Jogador.Partidas.Select(x => x.Time).Distinct().Count() > 1;            
+            lblTrocaTime.Visible = Jogador.Partidas.Select(x => x.Time).Distinct().Count() > 1;
+
+            lblPartidasRecentes.Visible = true;
+            lblMediasPartidasRecentes.Visible = true;
 
             ucPartidas.Prepara(Jogador.Partidas);
 
-            ucMedias.Prepara(Jogador);
+            ucMedias.Prepara(Jogador.Partidas, Jogador.Medias);
+
+            if (!string.IsNullOrEmpty(ddlAdversario.SelectedValue))
+            {
+                ProcessarStatsAdversario();
+            }
+            else
+            {
+                lblPartidasContraAdv.Visible = false;
+                lblMediasContraAdv.Visible = false;
+                ucPartidasContraAdv.Visible = false;
+                ucMediasContraAdv.Visible = false;
+            }
 
             ProcessarDuploETriploDuplo();
         }
@@ -269,6 +267,91 @@ namespace NBAStats
             else
             {
                 lblTripleDouble.ForeColor = System.Drawing.Color.LightGreen;
+            }
+        }
+
+        private Partida ProcessarPartida(List<HtmlNode> nodes)
+        {
+            var dicStats = new Dictionary<string, string>()
+                    {
+                        { "Data", null },
+                        { "Time", null },
+                        { "Adversario", null },
+                        { "Resultado", null },
+                        { "Minutos", null },
+                        { "FieldGoalsFeitos", null },
+                        { "FieldGoalsTentados", null },
+                        { "Cestas3Feitas", null },
+                        { "Cestas3Tentadas", null },
+                        { "Cestas3Percentual", null },
+                        { "LancesLivresFeitos", null },
+                        { "LancesLivresTentados", null },
+                        { "LancesLivresPercentual", null },
+                        { "Rebotes", null },
+                        { "Assistencias", null },
+                        { "Roubos", null },
+                        { "Bloqueios", null },
+                        { "InversoesPosse", null },
+                        { "Pontos", null }
+                    };
+
+            for (int j = 0; j < nodes.Count(); j++)
+            {
+                string text = nodes[j].InnerText;
+
+                if (string.IsNullOrEmpty(text))
+                {
+                    text = "0";
+                }
+                else if (text.StartsWith("."))
+                {
+                    text = "0" + text;
+                }
+
+                dicStats[dicStats.ElementAt(j).Key] = text;
+            }
+
+            return Partida.DictionaryDePara(dicStats);
+        }
+
+        private void ProcessarStatsAdversario()
+        {
+            var nodes = JogadorStats.Where(z => z.ChildNodes.Where(x => x.Name == "td" && x.Attributes.Where(y => y.Value == "opp_id").Count() > 0 && x.InnerText == ddlAdversario.SelectedValue).Count() > 0).ToList();
+
+            int quantJogosAdv = nodes.Count();
+
+            if (quantJogosAdv > 0)
+            {
+                lblPartidasContraAdv.Visible = true;
+                lblPartidasContraAdv.Text = "Partidas Contra " + ddlAdversario.SelectedItem.Text;
+
+                for (int i = 0; i < quantJogosAdv; i++)
+                {
+                    var childNodes = nodes[i].ChildNodes.Where(x => x.Name == "td" && x.Attributes.Where(y => y.Name == "data-stat" && lstAtributos.Contains(y.Value)).Count() > 0).ToList();
+                    Jogador.PartidasContraAdv.Add(ProcessarPartida(childNodes));
+                }
+
+                ucPartidasContraAdv.Prepara(Jogador.PartidasContraAdv);
+
+                if (quantJogosAdv > 1)
+                {
+                    lblMediasContraAdv.Visible = true;
+                    lblMediasContraAdv.Text = "Médias Contra " + ddlAdversario.SelectedItem.Text;
+
+                    ucMediasContraAdv.Prepara(Jogador.PartidasContraAdv, Jogador.MediasContraAdv);
+                }
+                else
+                {
+                    ucMediasContraAdv.Visible = false;
+                    lblMediasContraAdv.Visible = false;
+                }
+            }
+            else
+            {
+                ucPartidasContraAdv.Visible = false;
+                ucMediasContraAdv.Visible = false;
+                lblPartidasContraAdv.Visible = false;
+                lblMediasContraAdv.Visible = false;
             }
         }
     }

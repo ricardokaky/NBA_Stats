@@ -10,16 +10,18 @@ namespace NBAStats.Controles
 {
     public partial class ucMedias : UserControl
     {
-        public Jogador Jogador { get; set; }
+        public List<Media> Medias { get; set; }
+        public List<Partida> Partidas { get; set; }
 
         protected void Page_Load(object sender, EventArgs e)
         {
 
         }
 
-        public void Prepara(Jogador jogador)
+        public void Prepara(List<Partida> partidas, List<Media> medias)
         {
-            Jogador = jogador;
+            Partidas = partidas;
+            Medias = medias;
 
             dgMedias.DataSource = DeListParaDT();
             dgMedias.DataBind();
@@ -31,19 +33,19 @@ namespace NBAStats.Controles
         {
             DataTable dt = new DataTable();
 
-            foreach (var media in Jogador.Medias)
+            foreach (var media in Medias)
             {
                 dt.Columns.Add(media.Nome);
             }
 
             DataRow dr = dt.NewRow();
 
-            for (int i = 0; i < Jogador.Medias.Count(); i++)
+            for (int i = 0; i < Medias.Count(); i++)
             {
-                Jogador.Medias[i].Valor = Math.Round(Jogador.Partidas.Select(y => (int)y.GetType().GetProperty(Jogador.Medias[i].Nome).GetValue(y)).Average(), 1);
-                ProcessarCoeficienteVariacao(Jogador.Medias[i]);
+                Medias[i].Valor = Math.Round(Partidas.Select(y => (int)y.GetType().GetProperty(Medias[i].Nome).GetValue(y)).Average(), 1);
+                ProcessarCoeficienteVariacao(Medias[i]);
 
-                dr[i] = Jogador.Medias[i].Valor;
+                dr[i] = Medias[i].Valor;
             }
 
             dt.Rows.Add(dr);
@@ -55,12 +57,12 @@ namespace NBAStats.Controles
         {
             double variancia = 0;
 
-            foreach (var value in Jogador.Partidas.Select(x => x.GetType().GetProperty(media.Nome).GetValue(x)))
+            foreach (var value in Partidas.Select(x => x.GetType().GetProperty(media.Nome).GetValue(x)))
             {
                 variancia += Math.Pow((Convert.ToDouble(value) - media.Valor), 2);
             }
 
-            double desvioPadrao = Math.Sqrt(variancia / (Jogador.Partidas.Count() - 1));
+            double desvioPadrao = Math.Sqrt(variancia / (Partidas.Count() - 1));
 
             media.CoeficienteVariacao = Math.Round((desvioPadrao / media.Valor) * 100, 2);
         }
@@ -69,7 +71,7 @@ namespace NBAStats.Controles
         {
             if (e.Row.RowType == DataControlRowType.DataRow)
             {
-                foreach (Media media in Jogador.Medias)
+                foreach (Media media in Medias)
                 {
                     int coefRuim;
                     int coefBom;
