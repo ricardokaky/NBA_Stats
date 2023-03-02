@@ -6,6 +6,11 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Net;
 using System.Data;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using OpenQA.Selenium.Support.UI;
 
 namespace NBAStats
 {
@@ -18,6 +23,7 @@ namespace NBAStats
         private static Jogador Jogador;
         private int QuantJogos;
         private static string NomeJogador;
+        private WebDriver Browser;
         private readonly List<string> lstAtributos = new List<string>()
         {
             "date_game",
@@ -41,10 +47,49 @@ namespace NBAStats
             "pts"
         };
 
+        public async Task<IActionResult> Index()
+        {
+            try
+            {
+                string fullUrl = "https://www.bet365.com/#/AC/B18/C20604387/D48/E1453/F10/";
+                List<string> programmerLinks = new List<string>();
+
+                var options = new ChromeOptions()
+                {
+                    BinaryLocation = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+                };
+
+                string userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36";
+                options.AddArguments(new List<string>() { "headless", "disable-gpu", "--no-sandbox", $"user-agent={userAgent}" });
+
+                Browser = new ChromeDriver(options);
+                Browser.Navigate().GoToUrl(fullUrl);
+
+                var title = Browser.PageSource;
+
+                var links = Browser.FindElements(By.XPath("div"));
+                foreach (var url in links)
+                {
+                    programmerLinks.Add(url.GetAttribute("href"));
+                }
+
+                Browser.Dispose();
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Browser.Dispose();
+                throw ex;
+            }
+        }
+
         protected void butProcurar_Click(object sender, EventArgs e)
         {
             try
             {
+                Index();
+
                 lblNomeJogadorObrigatorio.Visible = false;
                 lblQuantJogosObrigatorio.Visible = false;
                 lblMinMinutosValido.Visible = false;
