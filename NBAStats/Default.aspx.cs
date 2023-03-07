@@ -65,13 +65,7 @@ namespace NBAStats
                 Browser = new ChromeDriver(options);
                 Browser.Navigate().GoToUrl(fullUrl);
 
-                var title = Browser.PageSource;
-
-                var links = Browser.FindElements(By.XPath("div"));
-                foreach (var url in links)
-                {
-                    programmerLinks.Add(url.GetAttribute("href"));
-                }
+                var links = Browser.ExecuteAsyncScript("return document.querySelectorAll('div.scb-ParticipantFixtureDetailsHigherBasketball')");
 
                 Browser.Dispose();
 
