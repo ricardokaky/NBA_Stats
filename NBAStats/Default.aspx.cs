@@ -11,6 +11,7 @@ using OpenQA.Selenium.Chrome;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using OpenQA.Selenium.Support.UI;
+using System.Threading;
 
 namespace NBAStats
 {
@@ -51,7 +52,7 @@ namespace NBAStats
         {
             try
             {
-                string fullUrl = "https://www.bet365.com/#/AC/B18/C20604387/D48/E1453/F10/";
+                string fullUrl = "https://www.bet365.com/SportsBook.API/web";
                 List<string> programmerLinks = new List<string>();
 
                 var options = new ChromeOptions()
@@ -64,16 +65,21 @@ namespace NBAStats
 
                 Browser = new ChromeDriver(options);
                 Browser.Navigate().GoToUrl(fullUrl);
+                Thread.Sleep(TimeSpan.FromSeconds(10));
 
-                var links = Browser.ExecuteAsyncScript("return document.querySelectorAll('div.scb-ParticipantFixtureDetailsHigherBasketball')");
+                var wait = new WebDriverWait(Browser, TimeSpan.FromSeconds(10));
+                wait.Until(x => x.FindElement(By.TagName("body")) != null);
 
-                Browser.Dispose();
+                var test = Browser.FindElement(By.XPath("//*")).GetAttribute("outerHTML");
+                var test2 = Browser.FindElement(By.XPath("//*")).GetAttribute("innerHTML");
+
+                Browser.Quit();
 
                 return null;
             }
             catch (Exception ex)
             {
-                Browser.Dispose();
+                Browser.Quit();
                 throw ex;
             }
         }
