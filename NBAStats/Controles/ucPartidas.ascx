@@ -145,6 +145,12 @@
                 <asp:Label runat="server" ID="lblRoubosBloqueios" Text='<%# DataBinder.Eval(Container, "DataItem.RoubosBloqueios") %>' />
             </ItemTemplate>
         </asp:TemplateField>
+
+        <asp:TemplateField HeaderText="Pontos e Bloqueios">
+            <ItemTemplate>
+                <asp:Label runat="server" ID="lblPontosBloqueios" Text='<%# DataBinder.Eval(Container, "DataItem.PontosBloqueios") %>' />
+            </ItemTemplate>
+        </asp:TemplateField>
     </Columns>
 </asp:GridView>
 
