@@ -302,6 +302,9 @@
   <ItemGroup>
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="Classes\Jogador.cs" />
+    <Compile Include="Classes\Linha.cs" />
+    <Compile Include="Classes\Partida.cs" />
     <Compile Include="Controles\ucMedias.ascx.cs">
       <DependentUpon>ucMedias.ascx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -316,9 +319,9 @@
     <Compile Include="Controles\ucPartidas.ascx.designer.cs">
       <DependentUpon>ucPartidas.ascx</DependentUpon>
     </Compile>
-    <Compile Include="Partida.cs" />
-    <Compile Include="Media.cs" />
-    <Compile Include="Jogador.cs" />
+    <Compile Include="Classes\PartidaJogador.cs" />
+    <Compile Include="Classes\Media.cs" />
+    <Compile Include="Classes\HistoricoJogador.cs" />
     <Compile Include="Contact.aspx.cs">
       <DependentUpon>Contact.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

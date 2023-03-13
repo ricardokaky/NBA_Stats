@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NBAStats.Classes;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -11,14 +12,14 @@ namespace NBAStats.Controles
     public partial class ucMedias : UserControl
     {
         public List<Media> Medias { get; set; }
-        public List<Partida> Partidas { get; set; }
+        public List<PartidaJogador> Partidas { get; set; }
 
         protected void Page_Load(object sender, EventArgs e)
         {
 
         }
 
-        public void Prepara(List<Partida> partidas, List<Media> medias)
+        public void Prepara(List<PartidaJogador> partidas, List<Media> medias)
         {
             Partidas = partidas;
             Medias = medias;

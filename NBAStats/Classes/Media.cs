@@ -1,4 +1,4 @@
-﻿namespace NBAStats
+﻿namespace NBAStats.Classes
 {
     public class Media
     {
