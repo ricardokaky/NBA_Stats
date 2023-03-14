@@ -5,7 +5,8 @@ namespace NBAStats.Classes
     public class Jogador
     {
         private string mNome { get; set; }
-        public List<Linha> Linhas { get; set; }
+        public Dictionary<string, double> Linhas { get; set; }
+        public Dictionary<string, List<int>> LinhasAlternativas { get; set; }
 
         public string Nome
         {
@@ -16,6 +17,8 @@ namespace NBAStats.Classes
         public Jogador(string pNome)
         {
             mNome = pNome;
+            Linhas = new Dictionary<string, double>();
+            LinhasAlternativas = new Dictionary<string, List<int>>();
         }
     }
 }
