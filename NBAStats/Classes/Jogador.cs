@@ -7,6 +7,7 @@ namespace NBAStats.Classes
         private string mNome { get; set; }
         public Dictionary<string, double> Linhas { get; set; }
         public Dictionary<string, List<int>> LinhasAlternativas { get; set; }
+        public HistoricoJogador Historico { get; set; }
 
         public string Nome
         {

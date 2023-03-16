@@ -4,15 +4,13 @@ namespace NBAStats.Classes
 {
     public class HistoricoJogador
     {
-        public string Nome { get; set; }
         public List<PartidaJogador> Partidas { get; set; }
         public List<PartidaJogador> PartidasContraAdv { get; set; }
         public List<Media> Medias { get; set; }
         public List<Media> MediasContraAdv { get; set; }
 
-        public HistoricoJogador(string pNome)
+        public HistoricoJogador()
         {
-            Nome = pNome;
             Partidas = new List<PartidaJogador>();
             Medias = new List<Media>()
             {

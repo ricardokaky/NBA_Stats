@@ -20,12 +20,9 @@ namespace NBAStats
     public partial class _Default : Page
     {
         private readonly HtmlWeb Client = new HtmlWeb();
-        private static HtmlDocument Html;
         private static HtmlDocument JogadorHtml;
         private static List<HtmlNode> JogadorStats;
-        private static HistoricoJogador Jogador;
         private int QuantJogos;
-        private static string NomeJogador;
         private WebDriver Browser;
         private readonly List<string> lstAtributos = new List<string>()
         {
@@ -49,22 +46,12 @@ namespace NBAStats
             "tov",
             "pts"
         };
+        private List<Partida> Partidas;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!IsPostBack)
+            if (Browser == null)
             {
-                ProcurarOdds();
-            }
-        }
-
-        public async Task<IActionResult> ProcurarOdds()
-        {
-            try
-            {
-                string urlPartidas = "https://br.betano.com/sport/basquete/eua/nba/17106/?bt=0";
-                List<string> programmerLinks = new List<string>();
-
                 var options = new ChromeOptions()
                 {
                     BinaryLocation = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
@@ -73,12 +60,29 @@ namespace NBAStats
                 options.AddArguments(new List<string>() { "headless", "disable-gpu", "--no-sandbox", $"user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36" });
 
                 Browser = new ChromeDriver(options);
+            }
 
-                AcessarUrl(urlPartidas);
+            if (!IsPostBack)
+            {
+                ProcurarOdds();
+
+                ProcurarHistoricoJogadores();
+
+                Analisar();
+
+                Browser.Quit();
+            }
+        }
+
+        public async Task<IActionResult> ProcurarOdds()
+        {
+            try
+            {
+                AcessarUrl("https://br.betano.com/sport/basquete/eua/nba/17106/");
 
                 var partidasDisponiveis = Browser.FindElements(By.XPath("//tr[contains(@class, 'events-list__grid__event')]"));
 
-                var lstPartidas = new List<Partida>();
+                Partidas = new List<Partida>();
 
                 // loopa as partidas listadas
                 for (int i = 0; i < partidasDisponiveis.Count(); i++)
@@ -98,17 +102,32 @@ namespace NBAStats
 
                     var dataHora = partidasDisponiveis[i].FindElement(By.XPath(".//div[@class='events-list__grid__info__datetime']")).GetAttribute("innerText");
 
-                    lstPartidas.Add(new Partida(dataHora.Replace("\r\n", " "), timeCasa + " x " + timeFora, href));
+                    Partidas.Add(new Partida(dataHora.Replace("\r\n", " "), timeCasa + " x " + timeFora, href));
                 }
 
-                for (int i = 0; i < lstPartidas.Count(); i++)
+                for (int i = 0; i < Partidas.Count(); i++)
                 {
-                    ProcurarOddsJogadores(lstPartidas[i]);
+                    AcessarUrl(Partidas[i].Url + "?bt=1");
 
-                    ProcurarOddsAlternativas(lstPartidas[i]);
+                    var aba = Browser.FindElement(By.XPath("//li[@class='events-tabs-container__tab__item GTM-1-container']")).GetAttribute("innerText");
+
+                    if (aba == "Especiais de jogadores")
+                    {
+                        ProcurarOddsJogadores(Partidas[i]);
+
+                        AcessarUrl(Partidas[i].Url + "?bt=2");
+
+                        ProcurarOddsAlternativas(Partidas[i]);
+                    }
+                    else if (aba == "Linhas alternativas de jogador")
+                    {
+                        ProcurarOddsAlternativas(Partidas[i]);
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
-
-                Browser.Quit();
 
                 return null;
             }
@@ -129,27 +148,17 @@ namespace NBAStats
 
         private void ProcurarOddsJogadores(Partida partida)
         {
-            AcessarUrl(partida.Url + "?bt=1");
-
             // clica no botão para expandir todas as linhas
             Browser.FindElement(By.XPath("//button[@class='tabs-navigation__actions__button icon--clickable']")).Click();
-
-            //var botoes = Browser.FindElements(By.XPath("//button[@class='load-more']"));
-
-            //for (int i = 0; i < botoes.Count(); i++)
-            //{
-            //    botoes[i].SendKeys(Keys.Return);
-            //}
 
             var eleLinhas = Browser.FindElements(By.XPath(".//div[@class='table-layout-container']"));
 
             // loopa as linhas disponíveis
             for (int i = 0; i < eleLinhas.Count(); i++)
             {
+                // TODO
                 //var botao = eleLinhas[i].FindElement(By.XPath(".//button[@class='load-more']"));
-                //botao.SendKeys(Keys.Return);
-
-                //var source = Browser.PageSource;
+                //botao.Click();
 
                 var nomeLinha = eleLinhas[i].FindElement(By.XPath(".//div[@class='table-market-header']")).GetAttribute("innerText");
 
@@ -179,8 +188,6 @@ namespace NBAStats
 
         private void ProcurarOddsAlternativas(Partida partida)
         {
-            AcessarUrl(partida.Url + "?bt=2");
-
             var eleLinhas = Browser.FindElements(By.XPath("//div[@class='markets__market']"));
 
             for (int i = 0; i < eleLinhas.Count(); i++)
@@ -207,6 +214,53 @@ namespace NBAStats
 
                     partida.Jogadores.First(x => x.Nome == nomeJogador).LinhasAlternativas[nomeLinha].Add(Convert.ToInt32(valor.Substring(0, valor.Length - 1)));
                 }
+            }
+        }
+
+        public async Task<IActionResult> ProcurarHistoricoJogadores()
+        {
+            try
+            {
+                AcessarUrl("https://www.basketball-reference.com/search/");
+
+                for (int i = 0; i < Partidas.Count(); i++)
+                {
+                    for (int i2 = 0; i2 < Partidas[i].Jogadores.Count(); i2++)
+                    {
+                        var jogador = Partidas[i].Jogadores[i2];
+
+                        Browser.FindElement(By.XPath("//input[@class = 'ac-input completely']")).SendKeys(jogador.Nome);
+
+                        Browser.FindElement(By.XPath("//input[@type = 'submit']")).Click();
+
+                        var url = Browser.FindElement(By.XPath("//div[@class = 'search-item-url']")).GetAttribute("innerText");
+
+                        url = url.Replace(".html", "/gamelog/2023").Insert(0, "https://www.basketball-reference.com");
+
+                        if (!AcessarPaginaJogador(url))
+                        {
+                            return null;
+                        }
+
+                        if (!ProcurarStatsJogador())
+                        {
+                            return null;
+                        }
+
+                        jogador.Historico = new HistoricoJogador();
+
+                        JogadorStats.Reverse();
+
+                        ProcessarStats(jogador);
+                    }
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Browser.Quit();
+                throw ex;
             }
         }
 
@@ -252,79 +306,22 @@ namespace NBAStats
                 }
 
                 QuantJogos = Convert.ToInt32(quantJogos);
-
-                if (!AcessarSite())
-                {
-                    return;
-                }
-
-                if (NomeJogador != txtNomeJogador.Text)
-                {
-                    if (!ProcurarJogador(nomeJogador))
-                    {
-                        return;
-                    }
-
-                    if (!AcessarPaginaJogador(nomeJogador))
-                    {
-                        return;
-                    }
-
-                    if (!ProcurarStatsJogador())
-                    {
-                        return;
-                    }
-
-                    JogadorStats.Reverse();
-                }
-
-                ProcessarStats();
-
-                NomeJogador = txtNomeJogador.Text;
             }
             catch (WebException ex)
             {
-                //exibir alert com exception
-                //falha ao acessar site
                 throw;
             }
             catch (Exception ex)
             {
-                //exibir alert com exception
                 throw;
             }
         }
 
-        private bool AcessarSite()
+        private bool AcessarPaginaJogador(string url)
         {
-            if (Html == null)
-            {
-                Html = Client.Load("https://www.basketball-reference.com/leagues/NBA_2023_advanced.html");
-
-                return Html.DocumentNode.ChildNodes.Count > 0;
-                //"Falha ao acessar site!"
-            }
-
-            return true;
-        }
-
-        private bool ProcurarJogador(string nomeJogador)
-        {
-            return Html.DocumentNode.SelectSingleNode($"//a[text() = \"{nomeJogador}\"]") != null;
-            //"Falha ao procurar pelo jogador!"
-        }
-
-        private bool AcessarPaginaJogador(string nomeJogador)
-        {
-            var link = Html.DocumentNode.SelectSingleNode($"//a[text() = \"{nomeJogador}\"]").Attributes["href"].Value;
-            link = link.Replace(".html", "/gamelog/2023").Insert(0, "https://www.basketball-reference.com");
-
-            JogadorHtml = Client.Load(link);
-
-            Jogador = new HistoricoJogador(nomeJogador);
+            JogadorHtml = Client.Load(url);
 
             return JogadorHtml.DocumentNode.ChildNodes.Count > 0;
-            //Falha ao acessar estatísticas do {nomeJogador}!
         }
 
         private bool ProcurarStatsJogador()
@@ -332,10 +329,9 @@ namespace NBAStats
             JogadorStats = new List<HtmlNode>(JogadorHtml.DocumentNode.SelectNodes("//tbody//tr[@id]").ToList());
 
             return JogadorStats.Count > 0;
-            //Falha ao acessar o front das estatísticas!
         }
 
-        private void ProcessarStats()
+        private void ProcessarStats(Jogador jogador)
         {
             var lstAttributes = new List<string>()
             {
@@ -360,8 +356,8 @@ namespace NBAStats
                 "pts"
             };
 
-            Jogador.Partidas.Clear();
-            Jogador.PartidasContraAdv.Clear();
+            jogador.Historico.Partidas.Clear();
+            jogador.Historico.PartidasContraAdv.Clear();
 
             for (int i = 0; i < QuantJogos; i++)
             {
@@ -377,21 +373,21 @@ namespace NBAStats
                     continue;
                 }
 
-                Jogador.Partidas.Add(ProcessarPartida(childNodes));
+                jogador.Historico.Partidas.Add(ProcessarPartida(childNodes));
             }
 
-            lblTrocaTime.Visible = Jogador.Partidas.Select(x => x.Time).Distinct().Count() > 1;
+            lblTrocaTime.Visible = jogador.Historico.Partidas.Select(x => x.Time).Distinct().Count() > 1;
 
             lblPartidasRecentes.Visible = true;
             lblMediasPartidasRecentes.Visible = true;
 
-            ucPartidas.Prepara(Jogador.Partidas);
+            ucPartidas.Prepara(jogador.Historico.Partidas);
 
-            ucMedias.Prepara(Jogador.Partidas, Jogador.Medias);
+            ucMedias.Prepara(jogador.Historico.Partidas, jogador.Historico.Medias);
 
             if (!string.IsNullOrEmpty(ddlAdversario.SelectedValue))
             {
-                ProcessarStatsAdversario();
+                ProcessarStatsAdversario(jogador);
             }
             else
             {
@@ -401,16 +397,16 @@ namespace NBAStats
                 ucMediasContraAdv.Visible = false;
             }
 
-            ProcessarDuploETriploDuplo();
+            ProcessarDuploETriploDuplo(jogador);
         }
 
-        private void ProcessarDuploETriploDuplo()
+        private void ProcessarDuploETriploDuplo(Jogador jogador)
         {
             lblDoubleDouble.Visible = true;
             lblTripleDouble.Visible = true;
 
-            double porcentDuploDuplo = (Jogador.Partidas.Where(x => x.DuploDuplo).Count() * 100) / Jogador.Partidas.Count();
-            double porcentTriploDuplo = (Jogador.Partidas.Where(x => x.TriploDuplo).Count() * 100) / Jogador.Partidas.Count();
+            double porcentDuploDuplo = (jogador.Historico.Partidas.Where(x => x.DuploDuplo).Count() * 100) / jogador.Historico.Partidas.Count();
+            double porcentTriploDuplo = (jogador.Historico.Partidas.Where(x => x.TriploDuplo).Count() * 100) / jogador.Historico.Partidas.Count();
 
             if (porcentDuploDuplo <= 40)
             {
@@ -483,7 +479,7 @@ namespace NBAStats
             return PartidaJogador.DictionaryDePara(dicStats);
         }
 
-        private void ProcessarStatsAdversario()
+        private void ProcessarStatsAdversario(Jogador jogador)
         {
             var nodes = JogadorStats.Where(z => z.ChildNodes.Where(x => x.Name == "td" && x.Attributes.Where(y => y.Value == "opp_id").Count() > 0 && x.InnerText == ddlAdversario.SelectedValue).Count() > 0).ToList();
 
@@ -497,17 +493,17 @@ namespace NBAStats
                 for (int i = 0; i < quantJogosAdv; i++)
                 {
                     var childNodes = nodes[i].ChildNodes.Where(x => x.Name == "td" && x.Attributes.Where(y => y.Name == "data-stat" && lstAtributos.Contains(y.Value)).Count() > 0).ToList();
-                    Jogador.PartidasContraAdv.Add(ProcessarPartida(childNodes));
+                    jogador.Historico.PartidasContraAdv.Add(ProcessarPartida(childNodes));
                 }
 
-                ucPartidasContraAdv.Prepara(Jogador.PartidasContraAdv);
+                ucPartidasContraAdv.Prepara(jogador.Historico.PartidasContraAdv);
 
                 if (quantJogosAdv > 1)
                 {
                     lblMediasContraAdv.Visible = true;
                     lblMediasContraAdv.Text = "Médias Contra " + ddlAdversario.SelectedItem.Text;
 
-                    ucMediasContraAdv.Prepara(Jogador.PartidasContraAdv, Jogador.MediasContraAdv);
+                    ucMediasContraAdv.Prepara(jogador.Historico.PartidasContraAdv, jogador.Historico.MediasContraAdv);
                 }
                 else
                 {
@@ -522,6 +518,100 @@ namespace NBAStats
                 lblPartidasContraAdv.Visible = false;
                 lblMediasContraAdv.Visible = false;
             }
+        }
+
+        private void Analisar()
+        {
+            for (int i = 0; i < Partidas.Count(); i++)
+            {
+                for (int i2 = 0; i2 < Partidas[i].Jogadores.Count(); i2++)
+                {
+                    foreach (string key in Partidas[i].Jogadores[i2].Linhas.Keys)
+                    {
+                        var linha = Partidas[i].Jogadores[i2].Linhas[key];
+
+                        switch (key)
+                        {
+                            case "Pontos Mais/Menos":
+                                var lstPontos = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.Pontos).ToList();
+                                VerificaOcorrenciasLinha(lstPontos, linha);
+                                break;
+                            case "Rebotes Mais/Menos":
+                                var lstRebotes = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.Rebotes).ToList();
+                                VerificaOcorrenciasLinha(lstRebotes, linha);
+                                break;
+                            case "Assistências Mais/Menos":
+                                var lstAssistencias = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.Assistencias).ToList();
+                                VerificaOcorrenciasLinha(lstAssistencias, linha);
+                                break;
+                            case "Total Arremessos de três pontos Marcados +/-":
+                                var lstCestas3Feitas = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.Cestas3Feitas).ToList();
+                                VerificaOcorrenciasLinha(lstCestas3Feitas, linha);
+                                break;
+                            case "Roubos Mais/Menos":
+                                var lstRoubos = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.Roubos).ToList();
+                                VerificaOcorrenciasLinha(lstRoubos, linha);
+                                break;
+                            case "Bloqueios Mais/Menos":
+                                var lstBloqueios = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.Bloqueios).ToList();
+                                VerificaOcorrenciasLinha(lstBloqueios, linha);
+                                break;
+                            case "Turnover Mais/Menos":
+                                var lstTurnovers = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.InversoesPosse).ToList();
+                                VerificaOcorrenciasLinha(lstTurnovers, linha);
+                                break;
+                            case "Pontos + Rebotes + Assistências Mais/Menos":
+                                var lstPontosRebotesAssistencias = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.PontosAssistenciasRebotes).ToList();
+                                VerificaOcorrenciasLinha(lstPontosRebotesAssistencias, linha);
+                                break;
+                            case "Pontos + Rebotes Mais/Menos":
+                                var lstPontosRebotes = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.PontosRebotes).ToList();
+                                VerificaOcorrenciasLinha(lstPontosRebotes, linha);
+                                break;
+                            case "Pontos + Assistências Mais/Menos":
+                                var lstPontosAssistencias = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.PontosAssistencias).ToList();
+                                VerificaOcorrenciasLinha(lstPontosAssistencias, linha);
+                                break;
+                            case "Rebotes + Assistências Mais/Menos":
+                                var lstRebotesAssistencias = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.AssistenciasRebotes).ToList();
+                                VerificaOcorrenciasLinha(lstRebotesAssistencias, linha);
+                                break;
+                            case "Pontos + Bloqueios Mais/Menos":
+                                var lstPontosBloqueios = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.PontosBloqueios).ToList();
+                                VerificaOcorrenciasLinha(lstPontosBloqueios, linha);
+                                break;
+                            case "Roubadas + Bloqueios Mais/Menos":
+                                var lstRoubosBloqueios = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.RoubosBloqueios).ToList();
+                                VerificaOcorrenciasLinha(lstRoubosBloqueios, linha);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void VerificaOcorrenciasLinha(List<int> lista, double linha)
+        {
+            if (lista.All(x => x < linha))
+            {
+                AdicionaOver();
+            }
+            else if (lista.All(x => x > linha))
+            {
+                AdicionaUnder();
+            }
+        }
+
+        private void AdicionaOver()
+        {
+
+        }
+
+        private void AdicionaUnder()
+        {
+
         }
     }
 }
