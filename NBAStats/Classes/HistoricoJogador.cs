@@ -25,7 +25,8 @@ namespace NBAStats.Classes
                 new Media("PontosAssistencias", 0, 0),
                 new Media("PontosRebotes", 0, 0),
                 new Media("AssistenciasRebotes", 0, 0),
-                new Media("RoubosBloqueios", 0, 0)
+                new Media("RoubosBloqueios", 0, 0),
+                new Media("PontosBloqueios", 0, 0)
             };
             PartidasContraAdv = new List<PartidaJogador>();
             MediasContraAdv = new List<Media>()
@@ -41,7 +42,8 @@ namespace NBAStats.Classes
                 new Media("PontosAssistencias", 0, 0),
                 new Media("PontosRebotes", 0, 0),
                 new Media("AssistenciasRebotes", 0, 0),
-                new Media("RoubosBloqueios", 0, 0)
+                new Media("RoubosBloqueios", 0, 0),
+                new Media("PontosBloqueios", 0, 0)
             };
         }
     }

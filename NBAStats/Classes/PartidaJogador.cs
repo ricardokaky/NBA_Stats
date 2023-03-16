@@ -221,6 +221,11 @@ namespace NBAStats.Classes
             get { return mRoubos + mBloqueios; }
         }
 
+        public int PontosBloqueios
+        {
+            get { return mPontos + mBloqueios; }
+        }
+
         public static PartidaJogador DictionaryDePara(Dictionary<string, string> dic)
         {
             var partida = new PartidaJogador();

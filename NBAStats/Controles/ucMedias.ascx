@@ -109,6 +109,15 @@
                 <asp:Label runat="server" ID="coefAvgRoubosBloqueios" Font-Size="XX-Small" />
             </ItemTemplate>
         </asp:TemplateField>
+
+        <asp:TemplateField HeaderText="Pontos e Bloqueios">
+            <ItemTemplate>
+                <div>
+                    <asp:Label runat="server" ID="lblAvgPontosBloqueios" Text='<%# DataBinder.Eval(Container, "DataItem.PontosBloqueios") %>' />
+                </div>
+                <asp:Label runat="server" ID="coefAvgPontosBloqueios" Font-Size="XX-Small" />
+            </ItemTemplate>
+        </asp:TemplateField>
     </Columns>
 </asp:GridView>
 

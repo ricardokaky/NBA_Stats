@@ -359,7 +359,9 @@ namespace NBAStats
             jogador.Historico.Partidas.Clear();
             jogador.Historico.PartidasContraAdv.Clear();
 
-            for (int i = 0; i < QuantJogos; i++)
+            var quant = JogadorStats.Count() < QuantJogos ? JogadorStats.Count() : QuantJogos;
+
+            for (int i = 0; i < quant; i++)
             {
                 var node = JogadorStats[i];
 
@@ -369,7 +371,7 @@ namespace NBAStats
 
                 if (!string.IsNullOrEmpty(txtMinMinutos.Text) && Convert.ToInt32(nodeMinutos.InnerText.Substring(0, nodeMinutos.InnerText.IndexOf(":"))) < Convert.ToInt32(txtMinMinutos.Text))
                 {
-                    QuantJogos++;
+                    quant++;
                     continue;
                 }
 
