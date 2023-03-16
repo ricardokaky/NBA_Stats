@@ -10,6 +10,7 @@ namespace NBAStats.Classes
         private string mTimes;
         private List<Jogador> mJogadores;
         private string mUrl;
+        private List<LinhaAssertiva> mLinhasAssertivas;
 
         public DateTime DataHora
         {
@@ -35,6 +36,12 @@ namespace NBAStats.Classes
             set { mUrl = value; }
         }
 
+        public List<LinhaAssertiva> LinhasAssertivas
+        {
+            get { return mLinhasAssertivas; }
+            set { mLinhasAssertivas = value; }
+        }
+
         public Partida(string pDataHora, string pTimes, string pUrl)
         {
             var mes = Convert.ToInt32(pDataHora.Substring(pDataHora.IndexOf("/") + 1, 2));
@@ -46,6 +53,7 @@ namespace NBAStats.Classes
             mTimes = pTimes;
             mJogadores = new List<Jogador>();
             mUrl = pUrl;
+            mLinhasAssertivas = new List<LinhaAssertiva>();
         }
     }
 }

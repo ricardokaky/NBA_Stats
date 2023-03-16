@@ -303,6 +303,7 @@
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Classes\Jogador.cs" />
+    <Compile Include="Classes\LinhaAssertiva.cs" />
     <Compile Include="Classes\Linha.cs" />
     <Compile Include="Classes\Partida.cs" />
     <Compile Include="Controles\ucMedias.ascx.cs">
