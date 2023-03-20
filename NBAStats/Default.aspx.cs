@@ -18,7 +18,7 @@ namespace NBAStats
     public partial class _Default : Page
     {
         private readonly HtmlWeb Client = new HtmlWeb();
-        private static HtmlDocument JogadorHtml;
+        private static HtmlDocument JogadorHtml = new HtmlDocument();
         private static List<HtmlNode> JogadorStats;
         private int QuantJogos = 5;
         private WebDriver Browser;
@@ -224,36 +224,33 @@ namespace NBAStats
         {
             try
             {
-                bool precisaVoltar = false;
-
-                AcessarUrl("https://www.basketball-reference.com/search/");
+                var proxyCounter = 0;
 
                 for (int i = 0; i < Partidas.Count(); i++)
                 {
                     for (int i2 = 0; i2 < Partidas[i].Jogadores.Count(); i2++)
                     {
-                        var jogador = Partidas[i].Jogadores[i2];
+                        proxyCounter++;
 
-                        if (precisaVoltar)
+                        if (proxyCounter > 5)
                         {
-                            AcessarUrl("https://www.basketball-reference.com/search/");
+
                         }
 
-                        Browser.FindElement(By.XPath("//input[@class = 'ac-input completely']")).SendKeys(jogador.Nome);
+                        var jogador = Partidas[i].Jogadores[i2];
 
-                        Browser.FindElement(By.XPath("//input[@type = 'submit']")).Click();
+                        var search = Client.Load("https://www.basketball-reference.com/search/search.fcgi?search=" + jogador.Nome.Replace(" ", "+").Replace("-", "+").Replace(".", "").Replace("'", ""));
+                        var href = search.DocumentNode.SelectSingleNode("//link[@rel = 'canonical']").Attributes.First(x => x.Name == "href").Value;
 
                         string url;
 
-                        if (Browser.Url.EndsWith("html"))
+                        if (href.EndsWith("html"))
                         {
-                            url = Browser.Url.Replace(".html", "/gamelog/2023");
-                            precisaVoltar = false;
+                            url = href.Replace(".html", "/gamelog/2023");
                         }
                         else
                         {
-                            url = Browser.FindElement(By.XPath("//div[@class = 'search-item-url']")).GetAttribute("innerText").Replace(".html", "/gamelog/2023").Insert(0, "https://www.basketball-reference.com");
-                            precisaVoltar = true;
+                            url = search.DocumentNode.SelectSingleNode("//div[@class = 'search-item-url']").InnerText.Replace(".html", "/gamelog/2023").Insert(0, "https://www.basketball-reference.com");
                         }
 
                         if (!AcessarPaginaJogador(url))
@@ -281,6 +278,11 @@ namespace NBAStats
                 Browser.Quit();
                 throw ex;
             }
+        }
+
+        private void GerarProxy()
+        {
+
         }
 
         protected void butProcurar_Click(object sender, EventArgs e)
@@ -339,6 +341,12 @@ namespace NBAStats
         private bool AcessarPaginaJogador(string url)
         {
             JogadorHtml = Client.Load(url);
+
+            if(JogadorHtml.DocumentNode.ChildNodes.Count == 0)
+            {
+                AcessarUrl(url);
+                JogadorHtml.LoadHtml(Browser.PageSource);
+            }
 
             return JogadorHtml.DocumentNode.ChildNodes.Count > 0;
         }
