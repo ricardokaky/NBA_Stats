@@ -45,6 +45,8 @@ namespace NBAStats
             "pts"
         };
         private List<Partida> Partidas;
+        private List<Tuple<string, int>> lstIpPorta;
+        private int indexIpPortaAtual = 0;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -63,6 +65,8 @@ namespace NBAStats
             if (!IsPostBack)
             {
                 ProcurarOdds();
+
+                GerarProxies();
 
                 ProcurarHistoricoJogadores();
 
@@ -100,7 +104,7 @@ namespace NBAStats
 
                     var dataHora = partidasDisponiveis[i].FindElement(By.XPath(".//div[@class='events-list__grid__info__datetime']")).GetAttribute("innerText");
 
-                    if (dataHora.Substring(0,2) != DateTime.Now.Day.ToString() && Convert.ToInt32(dataHora.Substring(dataHora.IndexOf("\n") + 1, 2)) > 2)
+                    if (dataHora.Substring(0, 2) != DateTime.Now.Day.ToString() && Convert.ToInt32(dataHora.Substring(dataHora.IndexOf("\n") + 1, 2)) > 2)
                     {
                         break;
                     }
@@ -136,7 +140,6 @@ namespace NBAStats
             }
             catch (Exception ex)
             {
-                Browser.Quit();
                 throw ex;
             }
         }
@@ -224,24 +227,44 @@ namespace NBAStats
         {
             try
             {
-                var proxyCounter = 0;
-
                 for (int i = 0; i < Partidas.Count(); i++)
                 {
                     for (int i2 = 0; i2 < Partidas[i].Jogadores.Count(); i2++)
                     {
-                        proxyCounter++;
-
-                        if (proxyCounter > 5)
-                        {
-
-                        }
-
                         var jogador = Partidas[i].Jogadores[i2];
 
-                        var search = Client.Load("https://www.basketball-reference.com/search/search.fcgi?search=" + jogador.Nome.Replace(" ", "+").Replace("-", "+").Replace(".", "").Replace("'", ""));
-                        var href = search.DocumentNode.SelectSingleNode("//link[@rel = 'canonical']").Attributes.First(x => x.Name == "href").Value;
+                        if (jogador.Historico != null && jogador.Historico.Partidas != null && jogador.Historico.Partidas.Count() > 0)
+                        {
+                            continue;
+                        }
 
+                        HtmlDocument search = new HtmlDocument();
+                        string href = "";
+
+                        while (true)
+                        {
+                            try
+                            {
+                                search = Client.Load("https://www.basketball-reference.com/search/search.fcgi?search=" + jogador.Nome.Replace("Sr.", "").Replace(".", "").Replace("'", "").Trim().Replace(" ", "+").Replace("-", "+"), lstIpPorta[indexIpPortaAtual].Item1, lstIpPorta[indexIpPortaAtual].Item2, "", "");
+                                href = search.DocumentNode.SelectSingleNode("//link[@rel = 'canonical']").Attributes.First(x => x.Name == "href").Value;
+                                break;
+                            }
+                            catch (Exception)
+                            {
+                                if (indexIpPortaAtual == lstIpPorta.Count() - 1)
+                                {
+                                    GerarProxies();
+                                    indexIpPortaAtual = 0;
+                                }
+                                else
+                                {
+                                    indexIpPortaAtual++;
+                                }
+
+                                continue;
+                            }
+                        }
+                                              
                         string url;
 
                         if (href.EndsWith("html"))
@@ -275,14 +298,28 @@ namespace NBAStats
             }
             catch (Exception ex)
             {
-                Browser.Quit();
                 throw ex;
             }
         }
 
-        private void GerarProxy()
+        private void GerarProxies()
         {
+            var sslProxies = Client.Load("https://www.sslproxies.org/");
 
+            var rows = sslProxies.DocumentNode.SelectNodes("//table[@class='table table-striped table-bordered']//tbody//tr");
+
+            lstIpPorta = new List<Tuple<string, int>>();
+
+            for (int i = 0; i < rows.Count(); i++)
+            {
+                if (rows[i].SelectSingleNode(".//td[3]").InnerText == "US")
+                {
+                    var ip = rows[i].SelectSingleNode(".//td[1]").InnerText;
+                    var porta = rows[i].SelectSingleNode(".//td[2]").InnerText;
+                    var ipPorta = new Tuple<string, int>(ip, Convert.ToInt32(porta));
+                    lstIpPorta.Add(ipPorta);
+                }
+            }
         }
 
         protected void butProcurar_Click(object sender, EventArgs e)
@@ -340,9 +377,9 @@ namespace NBAStats
 
         private bool AcessarPaginaJogador(string url)
         {
-            JogadorHtml = Client.Load(url);
+            JogadorHtml = Client.Load(url, lstIpPorta[indexIpPortaAtual].Item1, lstIpPorta[indexIpPortaAtual].Item2, "", "");
 
-            if(JogadorHtml.DocumentNode.ChildNodes.Count == 0)
+            if (JogadorHtml.DocumentNode.ChildNodes.Count == 0)
             {
                 AcessarUrl(url);
                 JogadorHtml.LoadHtml(Browser.PageSource);
