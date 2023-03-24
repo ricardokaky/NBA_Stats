@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NBAStats.Classes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -14,7 +15,7 @@ namespace NBAStats.Controles
 
         }
 
-        public void Prepara(List<Partida> partidas)
+        public void Prepara(List<PartidaJogador> partidas)
         {
             Visible = true;
 

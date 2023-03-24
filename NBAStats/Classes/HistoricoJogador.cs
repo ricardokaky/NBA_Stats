@@ -1,19 +1,17 @@
 ﻿using System.Collections.Generic;
 
-namespace NBAStats
+namespace NBAStats.Classes
 {
-    public class Jogador
+    public class HistoricoJogador
     {
-        public string Nome { get; set; }
-        public List<Partida> Partidas { get; set; }
-        public List<Partida> PartidasContraAdv { get; set; }
+        public List<PartidaJogador> Partidas { get; set; }
+        public List<PartidaJogador> PartidasContraAdv { get; set; }
         public List<Media> Medias { get; set; }
         public List<Media> MediasContraAdv { get; set; }
 
-        public Jogador(string pNome)
+        public HistoricoJogador()
         {
-            Nome = pNome;
-            Partidas = new List<Partida>();
+            Partidas = new List<PartidaJogador>();
             Medias = new List<Media>()
             {
                 new Media("Cestas3Feitas", 0, 0),
@@ -30,7 +28,7 @@ namespace NBAStats
                 new Media("RoubosBloqueios", 0, 0),
                 new Media("PontosBloqueios", 0, 0)
             };
-            PartidasContraAdv = new List<Partida>();
+            PartidasContraAdv = new List<PartidaJogador>();
             MediasContraAdv = new List<Media>()
             {
                 new Media("Cestas3Feitas", 0, 0),

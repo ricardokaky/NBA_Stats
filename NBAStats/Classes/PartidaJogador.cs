@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace NBAStats
+namespace NBAStats.Classes
 {
-    public class Partida
+    public class PartidaJogador
     {
         private string mData;
         private string mTime;
@@ -226,9 +226,9 @@ namespace NBAStats
             get { return mPontos + mBloqueios; }
         }
 
-        public static Partida DictionaryDePara(Dictionary<string, string> dic)
+        public static PartidaJogador DictionaryDePara(Dictionary<string, string> dic)
         {
-            var partida = new Partida();
+            var partida = new PartidaJogador();
 
             foreach (var key in dic.Keys)
             {
