@@ -20,7 +20,6 @@ namespace NBAStats
         private readonly HtmlWeb Client = new HtmlWeb();
         private static HtmlDocument JogadorHtml = new HtmlDocument();
         private static List<HtmlNode> JogadorStats;
-        private int QuantJogos = 5;
         private WebDriver Browser;
         private readonly List<string> lstAtributos = new List<string>()
         {
@@ -44,60 +43,37 @@ namespace NBAStats
             "tov",
             "pts"
         };
-        private List<Partida> Partidas;
-        private List<Tuple<string, int, string>> lstIpPorta;
+        private static List<Partida> Partidas;
+        private static List<Tuple<string, int, string>> lstIpPorta;
         private int indexIpPortaAtual = 0;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Browser == null)
-            {
-                var options = new ChromeOptions()
-                {
-                    BinaryLocation = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
-                };
-
-                options.AddArguments(new List<string>() { "headless", "disable-gpu", "--no-sandbox", $"user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36" });
-
-                Browser = new ChromeDriver(options);
-            }
-
             if (!IsPostBack)
             {
-                ProcurarOdds();
+                if (Browser == null)
+                {
+                    var options = new ChromeOptions()
+                    {
+                        BinaryLocation = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+                    };
+
+                    options.AddArguments(new List<string>() { "headless", "disable-gpu", "--no-sandbox", $"user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36" });
+
+                    Browser = new ChromeDriver(options);
+                }
+
+                ProcurarLinhasOdds();
 
                 GerarProxies();
 
                 ProcurarHistoricoJogadores();
 
-                Analisar();
-
-                string resumo = "";
-
-                for (int i = 0; i < Partidas.Count(); i++)
-                {
-                    resumo += Partidas[i].Times + "\n\n";
-
-                    for (int i2 = 0; i2 < Partidas[i].LinhasAssertivas.Count(); i2++)
-                    {
-                        resumo += Partidas[i].LinhasAssertivas[i2].NomeJogador + " - " + Partidas[i].LinhasAssertivas[i2].Linha.Valor + " " + Partidas[i].LinhasAssertivas[i2].Linha.Nome;
-
-                        if (!Partidas[i].LinhasAssertivas[i2].Over)
-                        {
-                            resumo += " (UNDER)";
-                        }
-
-                        resumo += "\n";
-                    }
-
-                    resumo += "\n";
-                }
-
                 Browser.Quit();
             }
         }
 
-        public async Task<IActionResult> ProcurarOdds()
+        public async Task<IActionResult> ProcurarLinhasOdds()
         {
             try
             {
@@ -107,12 +83,10 @@ namespace NBAStats
 
                 Partidas = new List<Partida>();
 
-                // loopa as partidas listadas
                 for (int i = 0; i < partidasDisponiveis.Count(); i++)
                 {
                     var hyperlink = partidasDisponiveis[i].FindElement(By.XPath(".//a[@class='GTM-event-link events-list__grid__info__main']"));
 
-                    // pula as partidas ao vivo
                     if (hyperlink.GetAttribute("innerText").Contains("AO VIVO"))
                     {
                         continue;
@@ -175,21 +149,14 @@ namespace NBAStats
 
         private void ProcurarOddsJogadores(Partida partida)
         {
-            // clica no botão para expandir todas as linhas
             Browser.FindElement(By.XPath("//button[@class='tabs-navigation__actions__button icon--clickable']")).Click();
 
             var eleLinhas = Browser.FindElements(By.XPath(".//div[@class='table-layout-container']"));
 
-            // loopa as linhas disponíveis
             for (int i = 0; i < eleLinhas.Count(); i++)
             {
-                // TODO
-                //var botao = eleLinhas[i].FindElement(By.XPath(".//button[@class='load-more']"));
-                //botao.Click();
-
                 var nomeLinha = eleLinhas[i].FindElement(By.XPath(".//div[@class='table-market-header']")).GetAttribute("innerText");
 
-                // pula duplo duplo e triplo duplo
                 if (nomeLinha == "Double Double" || nomeLinha == "Triple Double")
                 {
                     continue;
@@ -197,7 +164,6 @@ namespace NBAStats
 
                 var rows = eleLinhas[i].FindElements(By.XPath(".//div[@class='row']"));
 
-                // loopa os jogadores disponíveis
                 for (int i2 = 0; i2 < rows.Count(); i2++)
                 {
                     var nomeJogador = rows[i2].FindElement(By.XPath(".//div[@class='row-title']")).GetAttribute("innerText");
@@ -290,7 +256,7 @@ namespace NBAStats
                                 continue;
                             }
                         }
-                                              
+
                         string url;
 
                         if (href.EndsWith("html"))
@@ -354,55 +320,32 @@ namespace NBAStats
 
         protected void butProcurar_Click(object sender, EventArgs e)
         {
-            try
+            lblQuantJogosObrigatorio.Visible = false;
+            lblMinMinutosValido.Visible = false;
+
+            var quantJogos = txtQuantJogos.Text;
+
+            if (string.IsNullOrEmpty(quantJogos) || quantJogos.Any(x => char.IsLetter(x)))
             {
-                lblNomeJogadorObrigatorio.Visible = false;
+                lblQuantJogosObrigatorio.Visible = true;
+                return;
+            }
+            else
+            {
                 lblQuantJogosObrigatorio.Visible = false;
+            }
+
+            if (txtMinMinutos.Text.Any(x => char.IsLetter(x)))
+            {
+                lblMinMinutosValido.Visible = true;
+                return;
+            }
+            else
+            {
                 lblMinMinutosValido.Visible = false;
-
-                var nomeJogador = txtNomeJogador.Text;
-                var quantJogos = txtQuantJogos.Text;
-
-                if (string.IsNullOrEmpty(nomeJogador))
-                {
-                    lblNomeJogadorObrigatorio.Visible = true;
-                    return;
-                }
-                else
-                {
-                    lblNomeJogadorObrigatorio.Visible = false;
-                }
-
-                if (string.IsNullOrEmpty(quantJogos) || quantJogos.Any(x => char.IsLetter(x)))
-                {
-                    lblQuantJogosObrigatorio.Visible = true;
-                    return;
-                }
-                else
-                {
-                    lblQuantJogosObrigatorio.Visible = false;
-                }
-
-                if (txtMinMinutos.Text.Any(x => char.IsLetter(x)))
-                {
-                    lblMinMinutosValido.Visible = true;
-                    return;
-                }
-                else
-                {
-                    lblMinMinutosValido.Visible = false;
-                }
-
-                QuantJogos = Convert.ToInt32(quantJogos);
             }
-            catch (WebException ex)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
+
+            Analisar(Convert.ToInt32(quantJogos));
         }
 
         private bool AcessarPaginaJogador(string url)
@@ -474,7 +417,7 @@ namespace NBAStats
             jogador.Historico.Partidas.Clear();
             jogador.Historico.PartidasContraAdv.Clear();
 
-            var quant = JogadorStats.Count() < QuantJogos ? JogadorStats.Count() : QuantJogos;
+            var quant = JogadorStats.Count();
 
             for (int i = 0; i < quant; i++)
             {
@@ -492,15 +435,6 @@ namespace NBAStats
 
                 jogador.Historico.Partidas.Add(ProcessarPartida(childNodes));
             }
-
-            lblTrocaTime.Visible = jogador.Historico.Partidas.Select(x => x.Time).Distinct().Count() > 1;
-
-            lblPartidasRecentes.Visible = true;
-            lblMediasPartidasRecentes.Visible = true;
-
-            ucPartidas.Prepara(jogador.Historico.Partidas);
-
-            ucMedias.Prepara(jogador.Historico.Partidas, jogador.Historico.Medias);
 
             if (!string.IsNullOrEmpty(ddlAdversario.SelectedValue))
             {
@@ -637,21 +571,26 @@ namespace NBAStats
             }
         }
 
-        private void Analisar()
+        private void Analisar(int quantPartidas)
         {
             for (int i = 0; i < Partidas.Count(); i++)
             {
+                Partidas[i].LinhasAssertivas = new List<LinhaAssertiva>();
+
                 for (int i2 = 0; i2 < Partidas[i].Jogadores.Count(); i2++)
                 {
                     var partida = Partidas[i];
                     var jogador = partida.Jogadores[i2].Nome;
-                    var lstPontos = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.Pontos).ToList();
-                    var lstRebotes = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.Rebotes).ToList();
-                    var lstAssistencias = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.Assistencias).ToList();
-                    var lstCestas3Feitas = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.Cestas3Feitas).ToList();
-                    var lstRoubos = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.Roubos).ToList();
-                    var lstBloqueios = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.Bloqueios).ToList();
-                    var lstPontosRebotesAssistencias = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.PontosAssistenciasRebotes).ToList();
+
+                    quantPartidas = quantPartidas <= Partidas[i].Jogadores[i2].Historico.Partidas.Count() ? quantPartidas : Partidas[i].Jogadores[i2].Historico.Partidas.Count();
+
+                    var lstPontos = Partidas[i].Jogadores[i2].Historico.Partidas.Take(quantPartidas).Select(x => x.Pontos).ToList();
+                    var lstRebotes = Partidas[i].Jogadores[i2].Historico.Partidas.Take(quantPartidas).Select(x => x.Rebotes).ToList();
+                    var lstAssistencias = Partidas[i].Jogadores[i2].Historico.Partidas.Take(quantPartidas).Select(x => x.Assistencias).ToList();
+                    var lstCestas3Feitas = Partidas[i].Jogadores[i2].Historico.Partidas.Take(quantPartidas).Select(x => x.Cestas3Feitas).ToList();
+                    var lstRoubos = Partidas[i].Jogadores[i2].Historico.Partidas.Take(quantPartidas).Select(x => x.Roubos).ToList();
+                    var lstBloqueios = Partidas[i].Jogadores[i2].Historico.Partidas.Take(quantPartidas).Select(x => x.Bloqueios).ToList();
+                    var lstPontosRebotesAssistencias = Partidas[i].Jogadores[i2].Historico.Partidas.Take(quantPartidas).Select(x => x.PontosAssistenciasRebotes).ToList();
 
                     foreach (string nomeLinha in Partidas[i].Jogadores[i2].Linhas.Keys)
                     {
@@ -741,6 +680,30 @@ namespace NBAStats
                         }
                     }
                 }
+            }
+
+            string resumo = "";
+
+            for (int i = 0; i < Partidas.Count(); i++)
+            {
+                if (Partidas[i].LinhasAssertivas.Count() > 0)
+                {
+                    resumo += Partidas[i].Times + "\n\n";
+                }
+
+                for (int i2 = 0; i2 < Partidas[i].LinhasAssertivas.Count(); i2++)
+                {
+                    resumo += Partidas[i].LinhasAssertivas[i2].NomeJogador + " - " + Partidas[i].LinhasAssertivas[i2].Linha.Valor + " " + Partidas[i].LinhasAssertivas[i2].Linha.Nome;
+
+                    if (!Partidas[i].LinhasAssertivas[i2].Over)
+                    {
+                        resumo += " (UNDER)";
+                    }
+
+                    resumo += "\n";
+                }
+
+                resumo += "\n";
             }
         }
 

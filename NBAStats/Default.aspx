@@ -7,17 +7,6 @@
     <asp:Table runat="server">
         <asp:TableRow>
             <asp:TableCell>
-                <asp:Label ID="lblNomeJogador" runat="server" Text="Nome Jogador:" />
-            </asp:TableCell>
-            <asp:TableCell>
-                <asp:TextBox ID="txtNomeJogador" runat="server" />
-            </asp:TableCell>
-            <asp:TableCell>
-                <asp:Label ID="lblNomeJogadorObrigatorio" runat="server" Text="O nome do jogador é obrigatório!" ForeColor="Red" Visible="false" />
-            </asp:TableCell>
-        </asp:TableRow>
-        <asp:TableRow>
-            <asp:TableCell>
                 <asp:Label ID="lblQuantJogos" runat="server" Text="Quantidade de Jogos: " />
             </asp:TableCell>
             <asp:TableCell>
@@ -36,6 +25,17 @@
             </asp:TableCell>
             <asp:TableCell>
                 <asp:Label ID="lblMinMinutosValido" runat="server" Text="Informe um mínimo de minutos válido!" ForeColor="Red" Visible="false" />
+            </asp:TableCell>
+        </asp:TableRow>
+        <asp:TableRow>
+            <asp:TableCell>
+                <asp:Label ID="lblNomeJogador" runat="server" Text="Nome Jogador:" />
+            </asp:TableCell>
+            <asp:TableCell>
+                <asp:TextBox ID="txtNomeJogador" runat="server" />
+            </asp:TableCell>
+            <asp:TableCell>
+                <asp:Label ID="lblNomeJogadorObrigatorio" runat="server" Text="O nome do jogador é obrigatório!" ForeColor="Red" Visible="false" />
             </asp:TableCell>
         </asp:TableRow>
         <asp:TableRow>

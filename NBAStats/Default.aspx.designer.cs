@@ -15,33 +15,6 @@ namespace NBAStats
     {
 
         /// <summary>
-        /// Controle lblNomeJogador.
-        /// </summary>
-        /// <remarks>
-        /// Campo gerado automaticamente.
-        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblNomeJogador;
-
-        /// <summary>
-        /// Controle txtNomeJogador.
-        /// </summary>
-        /// <remarks>
-        /// Campo gerado automaticamente.
-        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtNomeJogador;
-
-        /// <summary>
-        /// Controle lblNomeJogadorObrigatorio.
-        /// </summary>
-        /// <remarks>
-        /// Campo gerado automaticamente.
-        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblNomeJogadorObrigatorio;
-
-        /// <summary>
         /// Controle lblQuantJogos.
         /// </summary>
         /// <remarks>
@@ -94,6 +67,33 @@ namespace NBAStats
         /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lblMinMinutosValido;
+
+        /// <summary>
+        /// Controle lblNomeJogador.
+        /// </summary>
+        /// <remarks>
+        /// Campo gerado automaticamente.
+        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblNomeJogador;
+
+        /// <summary>
+        /// Controle txtNomeJogador.
+        /// </summary>
+        /// <remarks>
+        /// Campo gerado automaticamente.
+        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtNomeJogador;
+
+        /// <summary>
+        /// Controle lblNomeJogadorObrigatorio.
+        /// </summary>
+        /// <remarks>
+        /// Campo gerado automaticamente.
+        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblNomeJogadorObrigatorio;
 
         /// <summary>
         /// Controle lblAdversario.
