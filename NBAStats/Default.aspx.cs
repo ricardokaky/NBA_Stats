@@ -45,7 +45,7 @@ namespace NBAStats
             "pts"
         };
         private List<Partida> Partidas;
-        private List<Tuple<string, int>> lstIpPorta;
+        private List<Tuple<string, int, string>> lstIpPorta;
         private int indexIpPortaAtual = 0;
 
         protected void Page_Load(object sender, EventArgs e)
@@ -71,6 +71,27 @@ namespace NBAStats
                 ProcurarHistoricoJogadores();
 
                 Analisar();
+
+                string resumo = "";
+
+                for (int i = 0; i < Partidas.Count(); i++)
+                {
+                    resumo += Partidas[i].Times + "\n\n";
+
+                    for (int i2 = 0; i2 < Partidas[i].LinhasAssertivas.Count(); i2++)
+                    {
+                        resumo += Partidas[i].LinhasAssertivas[i2].NomeJogador + " - " + Partidas[i].LinhasAssertivas[i2].Linha.Valor + " " + Partidas[i].LinhasAssertivas[i2].Linha.Nome;
+
+                        if (!Partidas[i].LinhasAssertivas[i2].Over)
+                        {
+                            resumo += " (UNDER)";
+                        }
+
+                        resumo += "\n";
+                    }
+
+                    resumo += "\n";
+                }
 
                 Browser.Quit();
             }
@@ -233,6 +254,11 @@ namespace NBAStats
                     {
                         var jogador = Partidas[i].Jogadores[i2];
 
+                        if (jogador.Nome == "Aarron Nesmith")
+                        {
+                            jogador.Nome = "Aaron Nesmith";
+                        }
+
                         if (jogador.Historico != null && jogador.Historico.Partidas != null && jogador.Historico.Partidas.Count() > 0)
                         {
                             continue;
@@ -308,18 +334,22 @@ namespace NBAStats
 
             var rows = sslProxies.DocumentNode.SelectNodes("//table[@class='table table-striped table-bordered']//tbody//tr");
 
-            lstIpPorta = new List<Tuple<string, int>>();
+            lstIpPorta = new List<Tuple<string, int, string>>();
 
             for (int i = 0; i < rows.Count(); i++)
             {
-                if (rows[i].SelectSingleNode(".//td[3]").InnerText == "US")
+                var pais = rows[i].SelectSingleNode(".//td[3]").InnerText;
+
+                if (pais == "BR" || pais == "US")
                 {
                     var ip = rows[i].SelectSingleNode(".//td[1]").InnerText;
                     var porta = rows[i].SelectSingleNode(".//td[2]").InnerText;
-                    var ipPorta = new Tuple<string, int>(ip, Convert.ToInt32(porta));
+                    var ipPorta = new Tuple<string, int, string>(ip, Convert.ToInt32(porta), pais);
                     lstIpPorta.Add(ipPorta);
                 }
             }
+
+            lstIpPorta = lstIpPorta.OrderBy(x => x.Item3).ToList();
         }
 
         protected void butProcurar_Click(object sender, EventArgs e)
@@ -377,7 +407,28 @@ namespace NBAStats
 
         private bool AcessarPaginaJogador(string url)
         {
-            JogadorHtml = Client.Load(url, lstIpPorta[indexIpPortaAtual].Item1, lstIpPorta[indexIpPortaAtual].Item2, "", "");
+            while (true)
+            {
+                try
+                {
+                    JogadorHtml = Client.Load(url, lstIpPorta[indexIpPortaAtual].Item1, lstIpPorta[indexIpPortaAtual].Item2, "", "");
+                    break;
+                }
+                catch (Exception)
+                {
+                    if (indexIpPortaAtual == lstIpPorta.Count() - 1)
+                    {
+                        GerarProxies();
+                        indexIpPortaAtual = 0;
+                    }
+                    else
+                    {
+                        indexIpPortaAtual++;
+                    }
+
+                    continue;
+                }
+            }
 
             if (JogadorHtml.DocumentNode.ChildNodes.Count == 0)
             {
