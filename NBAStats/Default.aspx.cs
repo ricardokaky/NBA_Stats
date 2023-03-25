@@ -167,14 +167,16 @@ namespace NBAStats
                 for (int i2 = 0; i2 < rows.Count(); i2++)
                 {
                     var nomeJogador = rows[i2].FindElement(By.XPath(".//div[@class='row-title']")).GetAttribute("innerText");
-                    var valorLinha = rows[i2].FindElement(By.XPath(".//div[@class='handicap__single-item']")).GetAttribute("innerText");
+                    var valorLinha = Convert.ToDouble(rows[i2].FindElement(By.XPath(".//div[@class='handicap__single-item']")).GetAttribute("innerText").Replace(".", ","));
+                    var oddOver = Convert.ToDouble(rows[i2].FindElement(By.XPath(".//div[@style='--selection-column-start:1;']")).GetAttribute("innerText").Replace(".", ","));
+                    var oddUnder = Convert.ToDouble(rows[i2].FindElement(By.XPath(".//div[@style='--selection-column-start:2;']")).GetAttribute("innerText").Replace(".", ","));
 
                     if (!partida.Jogadores.Any(x => x.Nome == nomeJogador))
                     {
                         partida.Jogadores.Add(new Jogador(nomeJogador));
                     }
 
-                    partida.Jogadores.First(x => x.Nome == nomeJogador).Linhas.Add(nomeLinha, Convert.ToDouble(valorLinha.Replace(".", ",")));
+                    partida.Jogadores.First(x => x.Nome == nomeJogador).Linhas.Add(new Linha(nomeLinha, valorLinha, oddOver, oddUnder));
                 }
             }
         }
@@ -592,56 +594,54 @@ namespace NBAStats
                     var lstBloqueios = Partidas[i].Jogadores[i2].Historico.Partidas.Take(quantPartidas).Select(x => x.Bloqueios).ToList();
                     var lstPontosRebotesAssistencias = Partidas[i].Jogadores[i2].Historico.Partidas.Take(quantPartidas).Select(x => x.PontosAssistenciasRebotes).ToList();
 
-                    foreach (string nomeLinha in Partidas[i].Jogadores[i2].Linhas.Keys)
+                    foreach (Linha linha in Partidas[i].Jogadores[i2].Linhas)
                     {
-                        var linha = partida.Jogadores[i2].Linhas[nomeLinha];
-
-                        switch (nomeLinha)
+                        switch (linha.Nome)
                         {
                             case "Pontos Mais/Menos":
-                                VerificaOcorrenciasLinha(lstPontos, linha, partida, jogador, nomeLinha);
+                                VerificaOcorrenciasLinha(lstPontos, linha, partida, jogador);
                                 break;
                             case "Rebotes Mais/Menos":
-                                VerificaOcorrenciasLinha(lstRebotes, linha, partida, jogador, nomeLinha);
+                                VerificaOcorrenciasLinha(lstRebotes, linha, partida, jogador);
                                 break;
                             case "Assistências Mais/Menos":
-                                VerificaOcorrenciasLinha(lstAssistencias, linha, partida, jogador, nomeLinha);
+                                VerificaOcorrenciasLinha(lstAssistencias, linha, partida, jogador);
                                 break;
                             case "Total Arremessos de três pontos Marcados +/-":
-                                VerificaOcorrenciasLinha(lstCestas3Feitas, linha, partida, jogador, nomeLinha);
+                                VerificaOcorrenciasLinha(lstCestas3Feitas, linha, partida, jogador);
                                 break;
                             case "Roubos Mais/Menos":
-                                VerificaOcorrenciasLinha(lstRoubos, linha, partida, jogador, nomeLinha);
+                                VerificaOcorrenciasLinha(lstRoubos, linha, partida, jogador);
                                 break;
                             case "Bloqueios Mais/Menos":
-                                VerificaOcorrenciasLinha(lstBloqueios, linha, partida, jogador, nomeLinha);
+                                VerificaOcorrenciasLinha(lstBloqueios, linha, partida, jogador);
                                 break;
                             case "Turnover Mais/Menos":
                                 var lstTurnovers = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.InversoesPosse).ToList();
-                                VerificaOcorrenciasLinha(lstTurnovers, linha, partida, jogador, nomeLinha);
+                                VerificaOcorrenciasLinha(lstTurnovers, linha, partida, jogador);
                                 break;
                             case "Pontos + Rebotes + Assistências Mais/Menos":
-                                VerificaOcorrenciasLinha(lstPontosRebotesAssistencias, linha, partida, jogador, nomeLinha);
+                                VerificaOcorrenciasLinha(lstPontosRebotesAssistencias, linha, partida, jogador);
                                 break;
                             case "Pontos + Rebotes Mais/Menos":
                                 var lstPontosRebotes = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.PontosRebotes).ToList();
-                                VerificaOcorrenciasLinha(lstPontosRebotes, linha, partida, jogador, nomeLinha);
+                                VerificaOcorrenciasLinha(lstPontosRebotes, linha, partida, jogador);
                                 break;
                             case "Pontos + Assistências Mais/Menos":
                                 var lstPontosAssistencias = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.PontosAssistencias).ToList();
-                                VerificaOcorrenciasLinha(lstPontosAssistencias, linha, partida, jogador, nomeLinha);
+                                VerificaOcorrenciasLinha(lstPontosAssistencias, linha, partida, jogador);
                                 break;
                             case "Rebotes + Assistências Mais/Menos":
                                 var lstRebotesAssistencias = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.AssistenciasRebotes).ToList();
-                                VerificaOcorrenciasLinha(lstRebotesAssistencias, linha, partida, jogador, nomeLinha);
+                                VerificaOcorrenciasLinha(lstRebotesAssistencias, linha, partida, jogador);
                                 break;
                             case "Pontos + Bloqueios Mais/Menos":
                                 var lstPontosBloqueios = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.PontosBloqueios).ToList();
-                                VerificaOcorrenciasLinha(lstPontosBloqueios, linha, partida, jogador, nomeLinha);
+                                VerificaOcorrenciasLinha(lstPontosBloqueios, linha, partida, jogador);
                                 break;
                             case "Roubadas + Bloqueios Mais/Menos":
                                 var lstRoubosBloqueios = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.RoubosBloqueios).ToList();
-                                VerificaOcorrenciasLinha(lstRoubosBloqueios, linha, partida, jogador, nomeLinha);
+                                VerificaOcorrenciasLinha(lstRoubosBloqueios, linha, partida, jogador);
                                 break;
                             default:
                                 break;
@@ -707,19 +707,19 @@ namespace NBAStats
             }
         }
 
-        private void VerificaOcorrenciasLinha(List<int> lista, double linha, Partida partida, string nomeJogador, string nomeLinha)
+        private void VerificaOcorrenciasLinha(List<int> lista, Linha linha, Partida partida, string nomeJogador)
         {
-            if (lista.All(x => x > linha))
+            if (lista.All(x => x > linha.Valor))
             {
-                partida.LinhasAssertivas.Add(new LinhaAssertiva(nomeJogador, nomeLinha, linha));
+                partida.LinhasAssertivas.Add(new LinhaAssertiva(nomeJogador, linha));
             }
-            else if (lista.All(x => x < linha))
+            else if (lista.All(x => x < linha.Valor))
             {
-                partida.LinhasAssertivas.Add(new LinhaAssertiva(nomeJogador, nomeLinha, linha, false));
+                partida.LinhasAssertivas.Add(new LinhaAssertiva(nomeJogador, linha, false));
             }
         }
 
-        private void VerificaOcorrenciasLinhaAlternativa(List<int> lista, List<int> linhasAlternativas, Partida partida, string nomeJogador, string nomeLinha)
+        private void VerificaOcorrenciasLinhaAlternativa(List<int> lista, List<int> linhasAlternativas, Partida partida, string nomeJogador)
         {
             for (int i = 0; i < linhasAlternativas.Count(); i++)
             {

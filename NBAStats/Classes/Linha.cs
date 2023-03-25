@@ -1,31 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-
-namespace NBAStats.Classes
+﻿namespace NBAStats.Classes
 {
     public class Linha
     {
-        private string mNome;
-        private string mValor;
+        public string Nome;
+        public double Valor;
+        public double OddOver;
+        public double OddUnder;
 
-        public string Nome
+        public Linha(string pNome, double pValor, double pOddOver, double pOddUnder)
         {
-            get { return mNome; }
-            set { mNome = value; }
-        }
-
-        public string Valor
-        {
-            get { return mValor; }
-            set { mValor = value; }
-        }
-
-        public Linha(string pNome, string pValor)
-        {
-            mNome = pNome;
-            mValor = pValor;
+            Nome = pNome;
+            Valor = pValor;
+            OddOver = pOddOver;
+            OddUnder = pOddUnder;
         }
     }
 }
