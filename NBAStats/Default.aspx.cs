@@ -46,6 +46,7 @@ namespace NBAStats
         private static List<Partida> Partidas;
         private static List<Tuple<string, int, string>> lstIpPorta;
         private int indexIpPortaAtual = 0;
+        private string Resumo;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -176,7 +177,7 @@ namespace NBAStats
                         partida.Jogadores.Add(new Jogador(nomeJogador));
                     }
 
-                    partida.Jogadores.First(x => x.Nome == nomeJogador).Linhas.Add(new Linha(nomeLinha, valorLinha, oddOver, oddUnder));
+                    partida.Jogadores.Find(x => x.Nome == nomeJogador).Linhas.Add(new Linha(nomeLinha, valorLinha, oddOver, oddUnder));
                 }
             }
         }
@@ -196,19 +197,21 @@ namespace NBAStats
                     partida.Jogadores.Add(new Jogador(nomeJogador));
                 }
 
-                if (!partida.Jogadores.First(x => x.Nome == nomeJogador).LinhasAlternativas.ContainsKey(nomeLinha))
-                {
-                    partida.Jogadores.First(x => x.Nome == nomeJogador).LinhasAlternativas.Add(nomeLinha, new List<int>());
-                }
-
                 var botoes = eleLinhas[i].FindElements(By.XPath(".//button[contains(@class, 'selections__selection')]"));
+
+                var linhas = new List<Linha>();
 
                 for (int i2 = 0; i2 < botoes.Count(); i2++)
                 {
                     var valor = botoes[i2].FindElement(By.XPath(".//span[@class='selections__selection__title']")).GetAttribute("innerText");
+                    valor = valor.Substring(0, valor.Length - 1);
 
-                    partida.Jogadores.First(x => x.Nome == nomeJogador).LinhasAlternativas[nomeLinha].Add(Convert.ToInt32(valor.Substring(0, valor.Length - 1)));
+                    var odd = Convert.ToDouble(botoes[i2].FindElement(By.XPath(".//span[@class='selections__selection__odd']")).GetAttribute("innerText").Replace(".", ",").Trim());
+
+                    linhas.Add(new Linha(nomeLinha, Convert.ToDouble(valor), odd, 0));
                 }
+
+                partida.Jogadores.Find(x => x.Nome == nomeJogador).LinhasAlternativas.Add(new LinhaAlternativa(nomeLinha, linhas));
             }
         }
 
@@ -348,6 +351,8 @@ namespace NBAStats
             }
 
             Analisar(Convert.ToInt32(quantJogos));
+
+            Resumo.Replace(",", ".");
         }
 
         private bool AcessarPaginaJogador(string url)
@@ -648,32 +653,30 @@ namespace NBAStats
                         }
                     }
 
-                    foreach (string nomelinhaAlternaiva in Partidas[i].Jogadores[i2].LinhasAlternativas.Keys)
+                    foreach (LinhaAlternativa linhaAlternativa in Partidas[i].Jogadores[i2].LinhasAlternativas)
                     {
-                        var linhaAlternativa = Partidas[i].Jogadores[i2].LinhasAlternativas[nomelinhaAlternaiva];
-
-                        switch (nomelinhaAlternaiva)
+                        switch (linhaAlternativa.Nome)
                         {
                             case "Total de Pontos":
-                                VerificaOcorrenciasLinhaAlternativa(lstPontos, linhaAlternativa, partida, jogador, nomelinhaAlternaiva);
+                                VerificaOcorrenciasLinhaAlternativa(lstPontos, linhaAlternativa, partida, jogador);
                                 break;
                             case "Total de Rebotes":
-                                VerificaOcorrenciasLinhaAlternativa(lstRebotes, linhaAlternativa, partida, jogador, nomelinhaAlternaiva);
+                                VerificaOcorrenciasLinhaAlternativa(lstRebotes, linhaAlternativa, partida, jogador);
                                 break;
                             case "Total de Assistências":
-                                VerificaOcorrenciasLinhaAlternativa(lstAssistencias, linhaAlternativa, partida, jogador, nomelinhaAlternaiva);
+                                VerificaOcorrenciasLinhaAlternativa(lstAssistencias, linhaAlternativa, partida, jogador);
                                 break;
                             case "Total Arremessos de três pontos Marcados":
-                                VerificaOcorrenciasLinhaAlternativa(lstCestas3Feitas, linhaAlternativa, partida, jogador, nomelinhaAlternaiva);
+                                VerificaOcorrenciasLinhaAlternativa(lstCestas3Feitas, linhaAlternativa, partida, jogador);
                                 break;
                             case "Total de Roubos":
-                                VerificaOcorrenciasLinhaAlternativa(lstRoubos, linhaAlternativa, partida, jogador, nomelinhaAlternaiva);
+                                VerificaOcorrenciasLinhaAlternativa(lstRoubos, linhaAlternativa, partida, jogador);
                                 break;
                             case "Total de tocos":
-                                VerificaOcorrenciasLinhaAlternativa(lstBloqueios, linhaAlternativa, partida, jogador, nomelinhaAlternaiva);
+                                VerificaOcorrenciasLinhaAlternativa(lstBloqueios, linhaAlternativa, partida, jogador);
                                 break;
                             case "Total de Pontos, Rebotes e Assistências":
-                                VerificaOcorrenciasLinhaAlternativa(lstPontosRebotesAssistencias, linhaAlternativa, partida, jogador, nomelinhaAlternaiva);
+                                VerificaOcorrenciasLinhaAlternativa(lstPontosRebotesAssistencias, linhaAlternativa, partida, jogador);
                                 break;
                             default:
                                 break;
@@ -682,28 +685,28 @@ namespace NBAStats
                 }
             }
 
-            string resumo = "";
+            Resumo = "";
 
             for (int i = 0; i < Partidas.Count(); i++)
             {
                 if (Partidas[i].LinhasAssertivas.Count() > 0)
                 {
-                    resumo += Partidas[i].Times + "\n\n";
+                    Resumo += "**" + Partidas[i].Times + ":**\n";
                 }
 
                 for (int i2 = 0; i2 < Partidas[i].LinhasAssertivas.Count(); i2++)
                 {
-                    resumo += Partidas[i].LinhasAssertivas[i2].NomeJogador + " - " + Partidas[i].LinhasAssertivas[i2].Linha.Valor + " " + Partidas[i].LinhasAssertivas[i2].Linha.Nome;
+                    Resumo += Partidas[i].LinhasAssertivas[i2].NomeJogador + " - " + Partidas[i].LinhasAssertivas[i2].Linha.Valor + " " + Partidas[i].LinhasAssertivas[i2].Linha.Nome;
 
                     if (!Partidas[i].LinhasAssertivas[i2].Over)
                     {
-                        resumo += " (UNDER)";
+                        Resumo += " (UNDER)";
                     }
 
-                    resumo += "\n";
+                    Resumo += " [" + Partidas[i].LinhasAssertivas[i2].Odd + "]\n";
                 }
 
-                resumo += "\n";
+                Resumo += "\n";
             }
         }
 
@@ -719,13 +722,13 @@ namespace NBAStats
             }
         }
 
-        private void VerificaOcorrenciasLinhaAlternativa(List<int> lista, List<int> linhasAlternativas, Partida partida, string nomeJogador)
+        private void VerificaOcorrenciasLinhaAlternativa(List<int> lista, LinhaAlternativa linhaAlternativa, Partida partida, string nomeJogador)
         {
-            for (int i = 0; i < linhasAlternativas.Count(); i++)
+            for (int i = 0; i < linhaAlternativa.Linhas.Count(); i++)
             {
-                if (lista.All(x => x >= linhasAlternativas[i]))
+                if (lista.All(x => x >= linhaAlternativa.Linhas[i].Valor))
                 {
-                    partida.LinhasAssertivas.Add(new LinhaAssertiva(nomeJogador, nomeLinha, linhasAlternativas[i]));
+                    partida.LinhasAssertivas.Add(new LinhaAssertiva(nomeJogador, linhaAlternativa.Linhas[i]));
                 }
             }
         }
