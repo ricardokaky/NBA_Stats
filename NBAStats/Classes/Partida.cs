@@ -5,11 +5,10 @@ namespace NBAStats.Classes
 {
     public class Partida
     {
-        public DateTime DataHora;
-        public string Times;
-        public List<Jogador> Jogadores;
-        public string Url;
-        public List<LinhaAssertiva> LinhasAssertivas;
+        public DateTime DataHora { get; set; }
+        public string Times { get; set; }
+        public List<Jogador> Jogadores { get; set; }
+        public string Url { get; set; }
 
         public Partida(string pDataHora, string pTimes, string pUrl)
         {
@@ -22,7 +21,6 @@ namespace NBAStats.Classes
             Times = pTimes;
             Jogadores = new List<Jogador>();
             Url = pUrl;
-            LinhasAssertivas = new List<LinhaAssertiva>();
         }
     }
 }
