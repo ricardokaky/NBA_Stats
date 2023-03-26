@@ -4,7 +4,7 @@ namespace NBAStats.Classes
 {
     public class Jogador
     {
-        public string Nome;
+        public string Nome { get; set; }
         public List<Linha> Linhas { get; set; }
         public List<LinhaAlternativa> LinhasAlternativas { get; set; }
         public HistoricoJogador Historico { get; set; }
