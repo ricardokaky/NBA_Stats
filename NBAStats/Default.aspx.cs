@@ -69,9 +69,9 @@ namespace NBAStats
 
                 ProcurarHistoricoJogadores();
 
-                Analisar();
+                Browser.Dispose();
 
-                Browser.Quit();
+                Analisar();
             }
         }
 
@@ -247,7 +247,7 @@ namespace NBAStats
                                 href = search.DocumentNode.SelectSingleNode("//link[@rel = 'canonical']").Attributes.First(x => x.Name == "href").Value;
                                 break;
                             }
-                            catch (Exception)
+                            catch (Exception ex)
                             {
                                 if (indexIpPortaAtual == lstIpPorta.Count() - 1)
                                 {
@@ -584,6 +584,11 @@ namespace NBAStats
                     var partida = Partidas[i];
                     var jogador = partida.Jogadores[i2].Nome;
 
+                    if (Partidas[i].Jogadores[i2].Historico == null)
+                    {
+                        continue;
+                    }
+
                     var lstPontos = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.Pontos).ToList();
                     var lstRebotes = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.Rebotes).ToList();
                     var lstAssistencias = Partidas[i].Jogadores[i2].Historico.Partidas.Select(x => x.Assistencias).ToList();
@@ -682,30 +687,31 @@ namespace NBAStats
 
             using (var package = new ExcelPackage(@"C:\Users\ricardo.queiroz\Downloads\Linhas Assertivas.xls"))
             {
+                var sheet = package.Workbook.Worksheets.Add("PARTIDAS");
+
+                int index = 1;
+
                 for (int i = 0; i < Partidas.Count(); i++)
                 {
-                    var sheet = package.Workbook.Worksheets.Add(Partidas[i].Times);
-
-                    int index = 1;
-
                     for (int i2 = 0; i2 < Partidas[i].Jogadores.Count(); i2++)
                     {
                         for (int i3 = 0; i3 < Partidas[i].Jogadores[i2].Linhas.Count(); i3++)
                         {
-                            sheet.Cells[$"A{index}"].Value = Partidas[i].Jogadores[i2].Nome;
-                            sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Nome;
-                            sheet.Cells[$"C{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Valor;
+                            sheet.Cells[$"A{index}"].Value = Partidas[i].Times;
+                            sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
+                            sheet.Cells[$"C{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Nome;
+                            sheet.Cells[$"D{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Valor;
 
                             if (Partidas[i].Jogadores[i2].Linhas[i3].SequenciaUnder > 0)
                             {
-                                sheet.Cells[$"D{index}"].Value = "SIM";
-                                sheet.Cells[$"E{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].OddUnder.ToString().Replace(".", ",");
-                                sheet.Cells[$"F{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].SequenciaUnder;
+                                sheet.Cells[$"E{index}"].Value = "SIM";
+                                sheet.Cells[$"F{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].OddUnder.ToString().Replace(".", ",");
+                                sheet.Cells[$"G{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].SequenciaUnder;
                             }
                             else
                             {
-                                sheet.Cells[$"E{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].OddOver.ToString().Replace(".", ",");
-                                sheet.Cells[$"F{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].SequenciaOver;
+                                sheet.Cells[$"F{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].OddOver.ToString().Replace(".", ",");
+                                sheet.Cells[$"G{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].SequenciaOver;
                             }
 
                             index++;
@@ -719,11 +725,12 @@ namespace NBAStats
                             {
                                 var linha = Partidas[i].Jogadores[i2].LinhasAlternativas[i3].Linhas.Find(x => x.Nome == linhasSequencia[i4].Nome && x.Valor == linhasSequencia[i4].Valor);
 
-                                sheet.Cells[$"A{index}"].Value = Partidas[i].Jogadores[i2].Nome;
-                                sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].LinhasAlternativas[i3].Nome;
-                                sheet.Cells[$"C{index}"].Value = linha.Valor;
-                                sheet.Cells[$"E{index}"].Value = linha.OddOver.ToString().Replace(".", ",");
-                                sheet.Cells[$"F{index}"].Value = linha.SequenciaOver;
+                                sheet.Cells[$"A{index}"].Value = Partidas[i].Times;
+                                sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
+                                sheet.Cells[$"C{index}"].Value = Partidas[i].Jogadores[i2].LinhasAlternativas[i3].Nome;
+                                sheet.Cells[$"D{index}"].Value = linha.Valor;
+                                sheet.Cells[$"F{index}"].Value = linha.OddOver.ToString().Replace(".", ",");
+                                sheet.Cells[$"G{index}"].Value = linha.SequenciaOver;
 
                                 index++;
                             }
