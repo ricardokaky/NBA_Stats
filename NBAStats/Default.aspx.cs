@@ -69,7 +69,7 @@ namespace NBAStats
 
                 ProcurarHistoricoJogadores();
 
-                Browser.Dispose();
+                Browser.Quit();
 
                 Analisar();
             }
@@ -271,7 +271,14 @@ namespace NBAStats
                         }
                         else
                         {
-                            url = search.DocumentNode.SelectSingleNode("//div[@class = 'search-item-url']").InnerText.Replace(".html", "/gamelog/2023").Insert(0, "https://www.basketball-reference.com");
+                            if (jogador.Nome == "Bogdan Bogdanovic")
+                            {
+                                url = search.DocumentNode.SelectNodes("//div[@class = 'search-item-url']")[1].InnerText.Replace(".html", "/gamelog/2023").Insert(0, "https://www.basketball-reference.com");
+                            }
+                            else
+                            {
+                                url = search.DocumentNode.SelectSingleNode("//div[@class = 'search-item-url']").InnerText.Replace(".html", "/gamelog/2023").Insert(0, "https://www.basketball-reference.com");
+                            }
                         }
 
                         if (!AcessarPaginaJogador(url))
