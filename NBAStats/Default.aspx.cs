@@ -69,9 +69,12 @@ namespace NBAStats
 
                 ProcurarHistoricoJogadores();
 
-                Browser.Quit();
-
                 Analisar();
+            }
+
+            if (Browser != null)
+            {
+                Browser.Quit();
             }
         }
 
