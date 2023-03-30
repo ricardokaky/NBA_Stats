@@ -6,12 +6,12 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Data;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using OpenQA.Selenium.Support.UI;
 using NBAStats.Classes;
 using OfficeOpenXml;
+using OpenQA.Selenium.Firefox;
 
 namespace NBAStats
 {
@@ -53,14 +53,16 @@ namespace NBAStats
             {
                 if (Browser == null)
                 {
-                    var options = new ChromeOptions()
+                    var options = new FirefoxOptions()
                     {
-                        BinaryLocation = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+                        BrowserExecutableLocation = @"C:\Users\ricardo.queiroz\AppData\Local\Mozilla Firefox\firefox.exe"
                     };
 
-                    options.AddArguments(new List<string>() { "headless", "disable-gpu", "--no-sandbox", $"user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36" });
+                    options.AddArguments(new List<string>() { "--headless", "--no-sandbox", $"user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36" });
 
-                    Browser = new ChromeDriver(options);
+                    FirefoxDriverService service = FirefoxDriverService.CreateDefaultService(@"C:\Users\ricardo.queiroz\AppData\Local\Mozilla Firefox", "geckodriver.exe");
+
+                    Browser = new FirefoxDriver(service, options);
                 }
 
                 ProcurarLinhasOdds();
@@ -173,8 +175,8 @@ namespace NBAStats
                 {
                     var nomeJogador = rows[i2].FindElement(By.XPath(".//div[@class='row-title']")).GetAttribute("innerText");
                     var valorLinha = Convert.ToDouble(rows[i2].FindElement(By.XPath(".//div[@class='handicap__single-item']")).GetAttribute("innerText").Replace(".", ","));
-                    var oddOver = Convert.ToDouble(rows[i2].FindElement(By.XPath(".//div[@style='--selection-column-start:1;']")).GetAttribute("innerText").Replace(".", ","));
-                    var oddUnder = Convert.ToDouble(rows[i2].FindElement(By.XPath(".//div[@style='--selection-column-start:2;']")).GetAttribute("innerText").Replace(".", ","));
+                    var oddOver = Convert.ToDouble(rows[i2].FindElement(By.XPath(".//div[@style='--selection-column-start: 1;']")).GetAttribute("innerText").Replace(".", ","));
+                    var oddUnder = Convert.ToDouble(rows[i2].FindElement(By.XPath(".//div[@style='--selection-column-start: 2;']")).GetAttribute("innerText").Replace(".", ","));
 
                     if (!partida.Jogadores.Any(x => x.Nome == nomeJogador))
                     {
