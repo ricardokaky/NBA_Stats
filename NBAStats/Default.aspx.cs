@@ -273,7 +273,7 @@ namespace NBAStats
                         {
                             try
                             {
-                                Browser.Navigate().GoToUrl("https://www.basketball-reference.com/search/search.fcgi?search=" + jogador.Nome.Replace("Sr.", "").Replace(".", "").Replace("'", "").Replace("III", "").Trim().Replace(" ", "+").Replace("-", "+"));
+                                Browser.Navigate().GoToUrl("https://www.basketball-reference.com/search/search.fcgi?search=" + jogador.Nome.Replace("Sr.", "").Replace(".", "").Replace("'", "").Replace("III", "").Replace("II", "").Trim().Replace(" ", "+").Replace("-", "+"));
                                 href = Browser.FindElement(By.XPath("//link[@rel = 'canonical']")).GetAttribute("href");
                                 break;
                             }
