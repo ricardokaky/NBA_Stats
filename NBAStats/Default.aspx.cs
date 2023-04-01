@@ -273,8 +273,8 @@ namespace NBAStats
                         {
                             try
                             {
-                                search = Client.Load("https://www.basketball-reference.com/search/search.fcgi?search=" + jogador.Nome.Replace("Sr.", "").Replace(".", "").Replace("'", "").Replace("III", "").Trim().Replace(" ", "+").Replace("-", "+"), lstIpPorta[indexIpPortaAtual].Item1, lstIpPorta[indexIpPortaAtual].Item2, "", "");
-                                href = search.DocumentNode.SelectSingleNode("//link[@rel = 'canonical']").Attributes.First(x => x.Name == "href").Value;
+                                Browser.Navigate().GoToUrl("https://www.basketball-reference.com/search/search.fcgi?search=" + jogador.Nome.Replace("Sr.", "").Replace(".", "").Replace("'", "").Replace("III", "").Trim().Replace(" ", "+").Replace("-", "+"));
+                                href = Browser.FindElement(By.XPath("//link[@rel = 'canonical']")).GetAttribute("href");
                                 break;
                             }
                             catch (Exception ex)
@@ -303,11 +303,11 @@ namespace NBAStats
                         {
                             if (jogador.Nome == "Bogdan Bogdanovic")
                             {
-                                url = search.DocumentNode.SelectNodes("//div[@class = 'search-item-url']")[1].InnerText.Replace(".html", "/gamelog/2023").Insert(0, "https://www.basketball-reference.com");
+                                url = Browser.FindElements(By.XPath(("//div[@class = 'search-item-url']")))[1].GetAttribute("innerText").Replace(".html", "/gamelog/2023").Insert(0, "https://www.basketball-reference.com");
                             }
                             else
                             {
-                                url = search.DocumentNode.SelectSingleNode("//div[@class = 'search-item-url']").InnerText.Replace(".html", "/gamelog/2023").Insert(0, "https://www.basketball-reference.com");
+                                url = Browser.FindElement(By.XPath(("//div[@class = 'search-item-url']"))).GetAttribute("innerText").Replace(".html", "/gamelog/2023").Insert(0, "https://www.basketball-reference.com");
                             }
                         }
 
@@ -339,6 +339,8 @@ namespace NBAStats
 
         private void GerarProxies()
         {
+            indexIpPortaAtual = 0;
+
             var sslProxies = Client.Load("https://www.sslproxies.org/");
 
             var rows = sslProxies.DocumentNode.SelectNodes("//table[@class='table table-striped table-bordered']//tbody//tr");
@@ -348,14 +350,13 @@ namespace NBAStats
             for (int i = 0; i < rows.Count(); i++)
             {
                 var pais = rows[i].SelectSingleNode(".//td[3]").InnerText;
+                var google = rows[i].SelectSingleNode(".//td[6]").InnerText;
 
-                if (pais == "BR" || pais == "US")
-                {
-                    var ip = rows[i].SelectSingleNode(".//td[1]").InnerText;
-                    var porta = rows[i].SelectSingleNode(".//td[2]").InnerText;
-                    var ipPorta = new Tuple<string, int, string>(ip, Convert.ToInt32(porta), pais);
-                    lstIpPorta.Add(ipPorta);
-                }
+                var ip = rows[i].SelectSingleNode(".//td[1]").InnerText;
+                var porta = rows[i].SelectSingleNode(".//td[2]").InnerText;
+                var ipPorta = new Tuple<string, int, string>(ip, Convert.ToInt32(porta), pais);
+                lstIpPorta.Add(ipPorta);
+
             }
 
             lstIpPorta = lstIpPorta.OrderBy(x => x.Item3).ToList();
@@ -395,10 +396,11 @@ namespace NBAStats
             {
                 try
                 {
-                    JogadorHtml = Client.Load(url, lstIpPorta[indexIpPortaAtual].Item1, lstIpPorta[indexIpPortaAtual].Item2, "", "");
+                    Browser.Navigate().GoToUrl(url);
+                    JogadorHtml.LoadHtml(Browser.PageSource);
                     break;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     if (indexIpPortaAtual == lstIpPorta.Count() - 1)
                     {
@@ -412,12 +414,6 @@ namespace NBAStats
 
                     continue;
                 }
-            }
-
-            if (JogadorHtml.DocumentNode.ChildNodes.Count == 0)
-            {
-                Browser.Navigate().GoToUrl(url);
-                JogadorHtml.LoadHtml(Browser.PageSource);
             }
 
             return JogadorHtml.DocumentNode.ChildNodes.Count > 0;
