@@ -8,7 +8,6 @@ using System.Data;
 using OpenQA.Selenium;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using OpenQA.Selenium.Support.UI;
 using NBAStats.Classes;
 using OfficeOpenXml;
 using OpenQA.Selenium.Firefox;
@@ -46,6 +45,8 @@ namespace NBAStats
         private static List<Partida> Partidas;
         private static List<Tuple<string, int, string>> lstIpPorta;
         private int indexIpPortaAtual = 0;
+        private static string UrlEspeciaisDeJogadores;
+        private static string UrlAlternativasDeJogadores;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -65,7 +66,7 @@ namespace NBAStats
                     Browser = new FirefoxDriver(service, options);
                 }
 
-                ProcurarLinhasOdds();
+                ScrapBetano();
 
                 GerarProxies();
 
@@ -80,63 +81,15 @@ namespace NBAStats
             }
         }
 
-        public async Task<IActionResult> ProcurarLinhasOdds()
+        public async Task<IActionResult> ScrapBetano()
         {
             try
             {
-                AcessarUrl("https://br.betano.com/sport/basquete/eua/nba/17106/");
+                ProcurarPartidasDisponiveis();
 
-                var partidasDisponiveis = Browser.FindElements(By.XPath("//tr[contains(@class, 'events-list__grid__event')]"));
+                ProcurarOddsEspeciaisJogadores();
 
-                Partidas = new List<Partida>();
-
-                for (int i = 0; i < partidasDisponiveis.Count(); i++)
-                {
-                    var hyperlink = partidasDisponiveis[i].FindElement(By.XPath(".//a[@class='GTM-event-link events-list__grid__info__main']"));
-
-                    if (hyperlink.GetAttribute("innerText").Contains("AO VIVO"))
-                    {
-                        continue;
-                    }
-
-                    var href = hyperlink.GetAttribute("href");
-                    var times = hyperlink.FindElements(By.XPath(".//span[@class='events-list__grid__info__main__participants__participant-name']"));
-                    var timeCasa = times[0].GetAttribute("innerText");
-                    var timeFora = times[1].GetAttribute("innerText");
-
-                    var dataHora = partidasDisponiveis[i].FindElement(By.XPath(".//div[@class='events-list__grid__info__datetime']")).GetAttribute("innerText");
-
-                    if (dataHora.Substring(0, 2) != DateTime.Now.Day.ToString() && Convert.ToInt32(dataHora.Substring(dataHora.IndexOf("\n") + 1, 2)) > 2)
-                    {
-                        break;
-                    }
-
-                    Partidas.Add(new Partida(dataHora.Replace("\r\n", " "), timeCasa + " x " + timeFora, href));
-                }
-
-                for (int i = 0; i < Partidas.Count(); i++)
-                {
-                    AcessarUrl(Partidas[i].Url + "?bt=1");
-
-                    var aba = Browser.FindElement(By.XPath("//li[@class='events-tabs-container__tab__item GTM-1-container']")).GetAttribute("innerText");
-
-                    if (aba == "Especiais de jogadores")
-                    {
-                        ProcurarOddsJogadores(Partidas[i]);
-
-                        AcessarUrl(Partidas[i].Url + "?bt=2");
-
-                        ProcurarOddsAlternativas(Partidas[i]);
-                    }
-                    else if (aba == "Linhas alternativas de jogador")
-                    {
-                        ProcurarOddsAlternativas(Partidas[i]);
-                    }
-                    else
-                    {
-                        continue;
-                    }
-                }
+                ProcurarOddsAlternativas();
 
                 return null;
             }
@@ -146,78 +99,150 @@ namespace NBAStats
             }
         }
 
-        private void AcessarUrl(string url)
+        private void ProcurarPartidasDisponiveis()
         {
-            Browser.Navigate().GoToUrl(url);
+            Browser.Navigate().GoToUrl("https://br.betano.com/sport/basquete/eua/nba/17106/?bt=0");
 
-            var wait = new WebDriverWait(Browser, TimeSpan.FromSeconds(10));
-            wait.Until(x => x.FindElement(By.TagName("body")) != null);
-        }
+            var partidasDisponiveis = Browser.FindElements(By.XPath("//tr[contains(@class, 'events-list__grid__event')]"));
 
-        private void ProcurarOddsJogadores(Partida partida)
-        {
-            Browser.FindElement(By.XPath("//button[@class='tabs-navigation__actions__button icon--clickable']")).Click();
+            Partidas = new List<Partida>();
 
-            var eleLinhas = Browser.FindElements(By.XPath(".//div[@class='table-layout-container']"));
-
-            for (int i = 0; i < eleLinhas.Count(); i++)
+            foreach (var partida in partidasDisponiveis)
             {
-                var nomeLinha = eleLinhas[i].FindElement(By.XPath(".//div[@class='table-market-header']")).GetAttribute("innerText");
+                var hyperlink = partida.FindElement(By.XPath(".//a[@class='GTM-event-link events-list__grid__info__main']"));
 
-                if (nomeLinha == "Double Double" || nomeLinha == "Triple Double" || nomeLinha.StartsWith("1"))
+                if (hyperlink.GetAttribute("innerText").Contains("AO VIVO"))
                 {
                     continue;
                 }
 
-                var rows = eleLinhas[i].FindElements(By.XPath(".//div[@class='row']"));
+                var times = hyperlink.FindElements(By.XPath(".//span[@class='events-list__grid__info__main__participants__participant-name']"));
+                var timeCasa = times[0].GetAttribute("innerText");
+                var timeFora = times[1].GetAttribute("innerText");
 
-                for (int i2 = 0; i2 < rows.Count(); i2++)
+                var dataHora = partida.FindElement(By.XPath(".//div[@class='events-list__grid__info__datetime']")).GetAttribute("innerText");
+
+                if (dataHora.Substring(0, 2) != DateTime.Now.Day.ToString().PadLeft(2, '0') && Convert.ToInt32(dataHora.Substring(dataHora.IndexOf("\n") + 1, 2)) > 2)
                 {
-                    var nomeJogador = rows[i2].FindElement(By.XPath(".//div[@class='row-title']")).GetAttribute("innerText");
-                    var valorLinha = Convert.ToDouble(rows[i2].FindElement(By.XPath(".//div[@class='handicap__single-item']")).GetAttribute("innerText").Replace(".", ","));
-                    var oddOver = Convert.ToDouble(rows[i2].FindElement(By.XPath(".//div[@style='--selection-column-start: 1;']")).GetAttribute("innerText").Replace(".", ","));
-                    var oddUnder = Convert.ToDouble(rows[i2].FindElement(By.XPath(".//div[@style='--selection-column-start: 2;']")).GetAttribute("innerText").Replace(".", ","));
+                    break;
+                }
+
+                Partidas.Add(new Partida(dataHora.Replace("\r\n", " "), timeCasa + " x " + timeFora));
+            }
+
+            var abas = Browser.FindElements(By.XPath("//ul[@class='events-tabs-container__tab']/li"));
+
+            UrlEspeciaisDeJogadores = "https://br.betano.com/sport/basquete/eua/nba/17106/?bt=" + abas.IndexOf(abas.First(x => x.GetAttribute("innerText") == "Especiais de jogadores"));
+            UrlAlternativasDeJogadores = "https://br.betano.com/sport/basquete/eua/nba/17106/?bt=" + abas.IndexOf(abas.First(x => x.GetAttribute("innerText") == "Linhas alternativas de jogador"));
+        }
+
+        private void ProcurarOddsEspeciaisJogadores()
+        {
+            Browser.Navigate().GoToUrl(UrlEspeciaisDeJogadores);
+
+            Browser.FindElement(By.XPath("//button[contains(@class, 'sticky-notification__cta--secondary')]")).Click();
+
+            var menuPartidas = Browser.FindElements(By.XPath("//div[@category='BASK']"));
+
+            foreach (var menu in menuPartidas)
+            {
+                var titulo = menu.FindElement(By.XPath(".//a[@class='event__header__title__link']")).GetAttribute("innerText");
+
+                var partida = Partidas.Find(x => x.Times == titulo.Replace("-", "x"));
+
+                if (partida == null)
+                {
+                    continue;
+                }
+
+                var linhas = menu.FindElements(By.XPath(".//div[@class='table-layout-container']"));
+
+                foreach (var linha in linhas)
+                {
+                    var nomeLinha = linha.FindElement(By.XPath(".//span[@class='table-market-header__text']")).GetAttribute("innerText");
+
+                    if (nomeLinha == "Double Double" || nomeLinha == "Triple Double" || nomeLinha.StartsWith("1"))
+                    {
+                        continue;
+                    }
+                    else if (nomeLinha != "Pontos Mais/Menos")
+                    {
+                        linha.FindElement(By.XPath(".//div[@class='table-market-header']")).Click();
+                    }
+
+                    var butMostrarTodos = linha.FindElements(By.XPath(".//button[@class='load-more']"));
+
+                    if (butMostrarTodos.Count() > 0)
+                    {
+                        butMostrarTodos[0].Click();
+                    }
+
+                    var rows = linha.FindElements(By.XPath(".//div[@class='row']"));
+
+                    for (int i2 = 0; i2 < rows.Count(); i2++)
+                    {
+                        var nomeJogador = rows[i2].FindElement(By.XPath(".//div[@class='row-title']")).GetAttribute("innerText");
+                        var valorLinha = Convert.ToDouble(rows[i2].FindElement(By.XPath(".//div[@class='handicap__single-item']")).GetAttribute("innerText").Replace(".", ","));
+                        var oddOver = Convert.ToDouble(rows[i2].FindElement(By.XPath(".//div[@style='--selection-column-start: 1;']")).GetAttribute("innerText").Replace(".", ","));
+                        var oddUnder = Convert.ToDouble(rows[i2].FindElement(By.XPath(".//div[@style='--selection-column-start: 2;']")).GetAttribute("innerText").Replace(".", ","));
+
+                        if (!partida.Jogadores.Any(x => x.Nome == nomeJogador))
+                        {
+                            partida.Jogadores.Add(new Jogador(nomeJogador));
+                        }
+
+                        partida.Jogadores.Find(x => x.Nome == nomeJogador).Linhas.Add(new Linha(nomeLinha, valorLinha, oddOver, oddUnder));
+                    }
+                }
+            }
+        }
+
+        private void ProcurarOddsAlternativas()
+        {
+            Browser.Navigate().GoToUrl(UrlAlternativasDeJogadores);
+
+            var menuPartidas = Browser.FindElements(By.XPath("//div[@category='BASK']"));
+
+            foreach (var menu in menuPartidas)
+            {
+                var titulo = menu.FindElement(By.XPath(".//a[@class='event__header__title__link']")).GetAttribute("innerText");
+
+                var partida = Partidas.Find(x => x.Times == titulo.Replace("-", "x"));
+
+                if (partida == null)
+                {
+                    continue;
+                }
+
+                var eleLinhas = menu.FindElements(By.XPath(".//div[@class='markets__market']"));
+
+                for (int i = 0; i < eleLinhas.Count(); i++)
+                {
+                    var aux = eleLinhas[i].FindElement(By.XPath(".//div[@class='markets__market__header__title']")).GetAttribute("innerText");
+                    var nomeJogador = aux.Substring(0, aux.IndexOf(" Total"));
+                    var nomeLinha = aux.Substring(aux.IndexOf(" Total") + 1);
 
                     if (!partida.Jogadores.Any(x => x.Nome == nomeJogador))
                     {
                         partida.Jogadores.Add(new Jogador(nomeJogador));
                     }
 
-                    partida.Jogadores.Find(x => x.Nome == nomeJogador).Linhas.Add(new Linha(nomeLinha, valorLinha, oddOver, oddUnder));
+                    var botoes = eleLinhas[i].FindElements(By.XPath(".//button[contains(@class, 'selections__selection')]"));
+
+                    var linhas = new List<Linha>();
+
+                    for (int i2 = 0; i2 < botoes.Count(); i2++)
+                    {
+                        var valor = botoes[i2].FindElement(By.XPath(".//span[@class='selections__selection__title']")).GetAttribute("innerText");
+                        valor = valor.Substring(0, valor.Length - 1);
+
+                        var odd = Convert.ToDouble(botoes[i2].FindElement(By.XPath(".//span[@class='selections__selection__odd']")).GetAttribute("innerText").Replace(".", ",").Trim());
+
+                        linhas.Add(new Linha(nomeLinha, Convert.ToDouble(valor), odd, 0));
+                    }
+
+                    partida.Jogadores.Find(x => x.Nome == nomeJogador).LinhasAlternativas.Add(new LinhaAlternativa(nomeLinha, linhas));
                 }
-            }
-        }
-
-        private void ProcurarOddsAlternativas(Partida partida)
-        {
-            var eleLinhas = Browser.FindElements(By.XPath("//div[@class='markets__market']"));
-
-            for (int i = 0; i < eleLinhas.Count(); i++)
-            {
-                var aux = eleLinhas[i].FindElement(By.XPath(".//div[@class='markets__market__header__title']")).GetAttribute("innerText");
-                var nomeJogador = aux.Substring(0, aux.IndexOf(" Total"));
-                var nomeLinha = aux.Substring(aux.IndexOf(" Total") + 1);
-
-                if (!partida.Jogadores.Any(x => x.Nome == nomeJogador))
-                {
-                    partida.Jogadores.Add(new Jogador(nomeJogador));
-                }
-
-                var botoes = eleLinhas[i].FindElements(By.XPath(".//button[contains(@class, 'selections__selection')]"));
-
-                var linhas = new List<Linha>();
-
-                for (int i2 = 0; i2 < botoes.Count(); i2++)
-                {
-                    var valor = botoes[i2].FindElement(By.XPath(".//span[@class='selections__selection__title']")).GetAttribute("innerText");
-                    valor = valor.Substring(0, valor.Length - 1);
-
-                    var odd = Convert.ToDouble(botoes[i2].FindElement(By.XPath(".//span[@class='selections__selection__odd']")).GetAttribute("innerText").Replace(".", ",").Trim());
-
-                    linhas.Add(new Linha(nomeLinha, Convert.ToDouble(valor), odd, 0));
-                }
-
-                partida.Jogadores.Find(x => x.Nome == nomeJogador).LinhasAlternativas.Add(new LinhaAlternativa(nomeLinha, linhas));
             }
         }
 
@@ -225,6 +250,18 @@ namespace NBAStats
         {
             try
             {
+                var options = new FirefoxOptions()
+                {
+                    BrowserExecutableLocation = @"C:\Users\ricardo.queiroz\AppData\Local\Mozilla Firefox\firefox.exe",
+                    PageLoadStrategy = PageLoadStrategy.Eager
+                };
+
+                options.AddArguments(new List<string>() { "--headless", "--no-sandbox", $"user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36" });
+
+                FirefoxDriverService service = FirefoxDriverService.CreateDefaultService(@"C:\Users\ricardo.queiroz\AppData\Local\Mozilla Firefox", "geckodriver.exe");
+
+                Browser = new FirefoxDriver(service, options);
+
                 for (int i = 0; i < Partidas.Count(); i++)
                 {
                     for (int i2 = 0; i2 < Partidas[i].Jogadores.Count(); i2++)
@@ -248,8 +285,8 @@ namespace NBAStats
                         {
                             try
                             {
-                                search = Client.Load("https://www.basketball-reference.com/search/search.fcgi?search=" + jogador.Nome.Replace("Sr.", "").Replace(".", "").Replace("'", "").Replace("III", "").Trim().Replace(" ", "+").Replace("-", "+"), lstIpPorta[indexIpPortaAtual].Item1, lstIpPorta[indexIpPortaAtual].Item2, "", "");
-                                href = search.DocumentNode.SelectSingleNode("//link[@rel = 'canonical']").Attributes.First(x => x.Name == "href").Value;
+                                Browser.Navigate().GoToUrl("https://www.basketball-reference.com/search/search.fcgi?search=" + jogador.Nome.Replace("Sr.", "").Replace(".", "").Replace("'", "").Replace("III", "").Replace("II", "").Trim().Replace(" ", "+").Replace("-", "+"));
+                                href = Browser.FindElement(By.XPath("//link[@rel = 'canonical']")).GetAttribute("href");
                                 break;
                             }
                             catch (Exception ex)
@@ -278,11 +315,11 @@ namespace NBAStats
                         {
                             if (jogador.Nome == "Bogdan Bogdanovic")
                             {
-                                url = search.DocumentNode.SelectNodes("//div[@class = 'search-item-url']")[1].InnerText.Replace(".html", "/gamelog/2023").Insert(0, "https://www.basketball-reference.com");
+                                url = Browser.FindElements(By.XPath(("//div[@class = 'search-item-url']")))[1].GetAttribute("innerText").Replace(".html", "/gamelog/2023").Insert(0, "https://www.basketball-reference.com");
                             }
                             else
                             {
-                                url = search.DocumentNode.SelectSingleNode("//div[@class = 'search-item-url']").InnerText.Replace(".html", "/gamelog/2023").Insert(0, "https://www.basketball-reference.com");
+                                url = Browser.FindElement(By.XPath(("//div[@class = 'search-item-url']"))).GetAttribute("innerText").Replace(".html", "/gamelog/2023").Insert(0, "https://www.basketball-reference.com");
                             }
                         }
 
@@ -314,6 +351,8 @@ namespace NBAStats
 
         private void GerarProxies()
         {
+            indexIpPortaAtual = 0;
+
             var sslProxies = Client.Load("https://www.sslproxies.org/");
 
             var rows = sslProxies.DocumentNode.SelectNodes("//table[@class='table table-striped table-bordered']//tbody//tr");
@@ -323,14 +362,13 @@ namespace NBAStats
             for (int i = 0; i < rows.Count(); i++)
             {
                 var pais = rows[i].SelectSingleNode(".//td[3]").InnerText;
+                var google = rows[i].SelectSingleNode(".//td[6]").InnerText;
 
-                if (pais == "BR" || pais == "US")
-                {
-                    var ip = rows[i].SelectSingleNode(".//td[1]").InnerText;
-                    var porta = rows[i].SelectSingleNode(".//td[2]").InnerText;
-                    var ipPorta = new Tuple<string, int, string>(ip, Convert.ToInt32(porta), pais);
-                    lstIpPorta.Add(ipPorta);
-                }
+                var ip = rows[i].SelectSingleNode(".//td[1]").InnerText;
+                var porta = rows[i].SelectSingleNode(".//td[2]").InnerText;
+                var ipPorta = new Tuple<string, int, string>(ip, Convert.ToInt32(porta), pais);
+                lstIpPorta.Add(ipPorta);
+
             }
 
             lstIpPorta = lstIpPorta.OrderBy(x => x.Item3).ToList();
@@ -370,10 +408,11 @@ namespace NBAStats
             {
                 try
                 {
-                    JogadorHtml = Client.Load(url, lstIpPorta[indexIpPortaAtual].Item1, lstIpPorta[indexIpPortaAtual].Item2, "", "");
+                    Browser.Navigate().GoToUrl(url);
+                    JogadorHtml.LoadHtml(Browser.PageSource);
                     break;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     if (indexIpPortaAtual == lstIpPorta.Count() - 1)
                     {
@@ -387,12 +426,6 @@ namespace NBAStats
 
                     continue;
                 }
-            }
-
-            if (JogadorHtml.DocumentNode.ChildNodes.Count == 0)
-            {
-                AcessarUrl(url);
-                JogadorHtml.LoadHtml(Browser.PageSource);
             }
 
             return JogadorHtml.DocumentNode.ChildNodes.Count > 0;
