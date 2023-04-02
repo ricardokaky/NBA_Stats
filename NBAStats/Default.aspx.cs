@@ -122,7 +122,7 @@ namespace NBAStats
 
                 var dataHora = partida.FindElement(By.XPath(".//div[@class='events-list__grid__info__datetime']")).GetAttribute("innerText");
 
-                if (dataHora.Substring(0, 2) != DateTime.Now.Day.ToString() && Convert.ToInt32(dataHora.Substring(dataHora.IndexOf("\n") + 1, 2)) > 2)
+                if (dataHora.Substring(0, 2) != DateTime.Now.Day.ToString().PadLeft(2, '0') && Convert.ToInt32(dataHora.Substring(dataHora.IndexOf("\n") + 1, 2)) > 2)
                 {
                     break;
                 }
@@ -250,6 +250,18 @@ namespace NBAStats
         {
             try
             {
+                var options = new FirefoxOptions()
+                {
+                    BrowserExecutableLocation = @"C:\Users\ricardo.queiroz\AppData\Local\Mozilla Firefox\firefox.exe",
+                    PageLoadStrategy = PageLoadStrategy.Eager
+                };
+
+                options.AddArguments(new List<string>() { "--headless", "--no-sandbox", $"user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36" });
+
+                FirefoxDriverService service = FirefoxDriverService.CreateDefaultService(@"C:\Users\ricardo.queiroz\AppData\Local\Mozilla Firefox", "geckodriver.exe");
+
+                Browser = new FirefoxDriver(service, options);
+
                 for (int i = 0; i < Partidas.Count(); i++)
                 {
                     for (int i2 = 0; i2 < Partidas[i].Jogadores.Count(); i2++)
