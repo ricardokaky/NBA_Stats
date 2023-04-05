@@ -10,6 +10,7 @@ using NBAStats.Classes;
 using OfficeOpenXml;
 using OpenQA.Selenium.Firefox;
 using System.IO;
+using System.Diagnostics;
 
 namespace NBAStats
 {
@@ -62,11 +63,10 @@ namespace NBAStats
                 {
                     throw ex;
                 }
-            }
-
-            if (Browser != null)
-            {
-                Browser.Dispose();
+                finally
+                {
+                    EncerraProcessos();
+                }
             }
         }
 
@@ -82,7 +82,14 @@ namespace NBAStats
                 options.PageLoadStrategy = PageLoadStrategy.Eager;
             }
 
-            options.AddArguments(new List<string>() { "--headless", "--no-sandbox", $"user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36" });
+            options.AddArguments(new List<string>() {
+                "--disable-gpu",
+                "--disable-application-cache",
+                "--disable-extensions",
+                "disable-infobars",
+                "--headless",
+                "--no-sandbox",
+                $"user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36" });
 
             FirefoxDriverService service = FirefoxDriverService.CreateDefaultService(@"C:\Users\ricardo.queiroz\AppData\Local\Mozilla Firefox", "geckodriver.exe");
 
@@ -95,9 +102,18 @@ namespace NBAStats
             {
                 ProcurarPartidasDisponiveis();
 
-                ProcurarOddsEspeciaisJogadores();
+                if (Partidas.Count() > 0)
+                {
+                    if (!string.IsNullOrEmpty(UrlEspeciaisDeJogadores))
+                    {
+                        ProcurarOddsEspeciaisJogadores();
+                    }
 
-                ProcurarOddsAlternativas();
+                    if (!string.IsNullOrEmpty(UrlAlternativasDeJogadores))
+                    {
+                        ProcurarOddsAlternativas();
+                    }
+                }
 
                 return;
             }
@@ -138,10 +154,23 @@ namespace NBAStats
                 Partidas.Add(new Partida(dataHora.Replace("\r\n", " "), timeCasa + " x " + timeFora));
             }
 
-            var abas = Browser.FindElements(By.XPath("//ul[@class='events-tabs-container__tab']/li"));
+            if (Partidas.Count > 0)
+            {
+                var abas = Browser.FindElements(By.XPath("//ul[@class='events-tabs-container__tab']/li"));
 
-            UrlEspeciaisDeJogadores = "https://br.betano.com/sport/basquete/eua/nba/17106/?bt=" + abas.IndexOf(abas.First(x => x.GetAttribute("innerText") == "Especiais de jogadores"));
-            UrlAlternativasDeJogadores = "https://br.betano.com/sport/basquete/eua/nba/17106/?bt=" + abas.IndexOf(abas.First(x => x.GetAttribute("innerText") == "Linhas alternativas de jogador"));
+                var abaEspeciais = abas.FirstOrDefault(x => x.GetAttribute("innerText") == "Especiais de jogadores");
+                var abaAlternativas = abas.FirstOrDefault(x => x.GetAttribute("innerText") == "Linhas alternativas de jogador");
+
+                if (abaEspeciais != null)
+                {
+                    UrlEspeciaisDeJogadores = "https://br.betano.com/sport/basquete/eua/nba/17106/?bt=" + abas.IndexOf(abaEspeciais);
+                }
+
+                if (abaAlternativas != null)
+                {
+                    UrlAlternativasDeJogadores = "https://br.betano.com/sport/basquete/eua/nba/17106/?bt=" + abas.IndexOf(abaAlternativas);
+                }
+            }
         }
 
         private void ProcurarOddsEspeciaisJogadores()
@@ -281,7 +310,7 @@ namespace NBAStats
                         }
                         else
                         {
-                            if (jogador.Nome == "Bogdan Bogdanovic" || jogador.Nome == "Gary Payton II")
+                            if (TemMultiplosResultados(jogador.Nome))
                             {
                                 url = Browser.FindElements(By.XPath(("//div[@class = 'search-item-url']")))[1].GetAttribute("innerText").Replace(".html", "/gamelog/2023").Insert(0, "https://www.basketball-reference.com");
                             }
@@ -337,6 +366,16 @@ namespace NBAStats
             }
 
             return nomeTratado.Replace(".", "").Replace("'", "").Replace("III", "").Replace("II", "").Trim().Replace(" ", "+").Replace("-", "+");
+        }
+
+        private bool TemMultiplosResultados(string nomeJogador)
+        {
+            if (nomeJogador == "Bogdan Bogdanovic" || nomeJogador == "Gary Payton II" || nomeJogador == "Johnny Davis")
+            {
+                return true;
+            }
+
+            return false;
         }
 
         protected void butProcurar_Click(object sender, EventArgs e)
@@ -764,6 +803,25 @@ namespace NBAStats
                 {
                     linhas[i].SequenciaOver = lista.Count();
                 }
+            }
+        }
+
+        private void EncerraProcessos()
+        {
+            if (Browser != null)
+            {
+                Browser.Close();
+                Browser.Dispose();
+            }
+
+            foreach (var process in Process.GetProcessesByName("Firefox"))
+            {
+                process.Kill();
+            }
+
+            foreach (var process in Process.GetProcessesByName("geckodriver"))
+            {
+                process.Kill();
             }
         }
     }
