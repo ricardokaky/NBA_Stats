@@ -198,7 +198,7 @@ namespace NBAStats
                 {
                     var nomeLinha = linha.FindElement(By.XPath(".//span[@class='table-market-header__text']")).GetAttribute("innerText");
 
-                    if (nomeLinha == "Double Double" || nomeLinha == "Triple Double" || nomeLinha.StartsWith("1") || nomeLinha == "Faltas recebidas Mais/Menos")
+                    if (nomeLinha.StartsWith("1") || nomeLinha == "Faltas recebidas Mais/Menos")
                     {
                         continue;
                     }
@@ -218,8 +218,14 @@ namespace NBAStats
 
                     foreach (IWebElement row in rows)
                     {
+                        double valorLinha = 0;
+
+                        if (nomeLinha != "Double Double" && nomeLinha != "Triple Double")
+                        {
+                            valorLinha = Convert.ToDouble(row.FindElement(By.XPath(".//div[@class='handicap__single-item']")).GetAttribute("innerText").Replace(".", ","));
+                        }
+
                         var nomeJogador = row.FindElement(By.XPath(".//div[@class='row-title']")).GetAttribute("innerText");
-                        var valorLinha = Convert.ToDouble(row.FindElement(By.XPath(".//div[@class='handicap__single-item']")).GetAttribute("innerText").Replace(".", ","));
                         var oddOver = Convert.ToDouble(row.FindElement(By.XPath(".//div[@style='--selection-column-start: 1;']")).GetAttribute("innerText").Replace(".", ","));
                         var oddUnder = Convert.ToDouble(row.FindElement(By.XPath(".//div[@style='--selection-column-start: 2;']")).GetAttribute("innerText").Replace(".", ","));
 
@@ -625,6 +631,14 @@ namespace NBAStats
                         var lstMinutos = jogador.Historico.Partidas.Select(x => x.Minutos).ToList();
                         VerificaOcorrenciasLinha(lstMinutos, linha);
                         break;
+                    case "Double Double":
+                        var lstDuploDuplo = jogador.Historico.Partidas.Select(x => x.DuploDuplo).ToList();
+                        VerificaOcorrenciasDuploETriplo(lstDuploDuplo, linha);
+                        break;
+                    case "Triple Double":
+                        var lstTriploDuplo = jogador.Historico.Partidas.Select(x => x.TriploDuplo).ToList();
+                        VerificaOcorrenciasDuploETriplo(lstTriploDuplo, linha);
+                        break;
                     default:
                         break;
                 }
@@ -684,8 +698,15 @@ namespace NBAStats
                         {
                             sheet.Cells[$"A{index}"].Value = Partidas[i].Times;
                             sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
-                            sheet.Cells[$"C{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Nome;
-                            sheet.Cells[$"D{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Valor;
+
+                            var nomeLinha = Partidas[i].Jogadores[i2].Linhas[i3].Nome;
+
+                            sheet.Cells[$"C{index}"].Value = nomeLinha;
+
+                            if (nomeLinha != "Double Double" && nomeLinha != "Triple Double")
+                            {
+                                sheet.Cells[$"D{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Valor;
+                            }
 
                             if (Partidas[i].Jogadores[i2].Linhas[i3].SequenciaUnder > 0)
                             {
@@ -745,6 +766,32 @@ namespace NBAStats
                 if (lista.Any(x => x > linha.Valor))
                 {
                     linha.SequenciaUnder = lista.IndexOf(lista.First(x => x > linha.Valor));
+                }
+                else
+                {
+                    linha.SequenciaUnder = lista.Count();
+                }
+            }
+        }
+
+        private void VerificaOcorrenciasDuploETriplo(List<bool> lista, Linha linha)
+        {
+            if (lista[0])
+            {
+                if (lista.Any(x => !x))
+                {
+                    linha.SequenciaOver = lista.IndexOf(lista.First(x => !x));
+                }
+                else
+                {
+                    linha.SequenciaOver = lista.Count();
+                }
+            }
+            else
+            {
+                if (lista.Any(x => x))
+                {
+                    linha.SequenciaUnder = lista.IndexOf(lista.First(x => x));
                 }
                 else
                 {
