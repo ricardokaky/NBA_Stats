@@ -198,7 +198,7 @@ namespace NBAStats
                 {
                     var nomeLinha = linha.FindElement(By.XPath(".//span[@class='table-market-header__text']")).GetAttribute("innerText");
 
-                    if (nomeLinha.StartsWith("1") || nomeLinha == "Faltas recebidas Mais/Menos")
+                    if (nomeLinha.StartsWith("1") || nomeLinha == "Faltas recebidas Mais/Menos" || nomeLinha == "Expulsão por faltas")
                     {
                         continue;
                     }
@@ -226,8 +226,20 @@ namespace NBAStats
                         }
 
                         var nomeJogador = row.FindElement(By.XPath(".//div[@class='row-title']")).GetAttribute("innerText");
-                        var oddOver = Convert.ToDouble(row.FindElement(By.XPath(".//div[@style='--selection-column-start: 1;']")).GetAttribute("innerText").Replace(".", ","));
-                        var oddUnder = Convert.ToDouble(row.FindElement(By.XPath(".//div[@style='--selection-column-start: 2;']")).GetAttribute("innerText").Replace(".", ","));
+                        double oddOver = 0;
+                        double oddUnder = 0;
+                        var auxOddOver = row.FindElements(By.XPath(".//div[@style='--selection-column-start: 1;']"));
+                        var auxOddUnder = row.FindElements(By.XPath(".//div[@style='--selection-column-start: 2;']"));
+
+                        if (auxOddOver.Count() > 0)
+                        {
+                            oddOver = Convert.ToDouble(auxOddOver[0].GetAttribute("innerText").Replace(".", ","));
+                        }
+
+                        if (auxOddUnder.Count() > 0)
+                        {
+                            oddUnder = Convert.ToDouble(auxOddUnder[0].GetAttribute("innerText").Replace(".", ","));
+                        }
 
                         if (!partida.Jogadores.Any(x => x.Nome == nomeJogador))
                         {
@@ -696,6 +708,12 @@ namespace NBAStats
                     {
                         for (int i3 = 0; i3 < Partidas[i].Jogadores[i2].Linhas.Count(); i3++)
                         {
+                            if ((Partidas[i].Jogadores[i2].Linhas[i3].SequenciaUnder > 0 && Partidas[i].Jogadores[i2].Linhas[i3].OddUnder == 0) ||
+                                (Partidas[i].Jogadores[i2].Linhas[i3].SequenciaOver > 0 && Partidas[i].Jogadores[i2].Linhas[i3].OddOver == 0))
+                            {
+                                continue;
+                            }
+
                             sheet.Cells[$"A{index}"].Value = Partidas[i].Times;
                             sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
 
