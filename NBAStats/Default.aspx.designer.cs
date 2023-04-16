@@ -96,24 +96,6 @@ namespace NBAStats
         protected global::System.Web.UI.WebControls.Label lblNomeJogadorObrigatorio;
 
         /// <summary>
-        /// Controle lblAdversario.
-        /// </summary>
-        /// <remarks>
-        /// Campo gerado automaticamente.
-        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblAdversario;
-
-        /// <summary>
-        /// Controle ddlAdversario.
-        /// </summary>
-        /// <remarks>
-        /// Campo gerado automaticamente.
-        /// Modificar a declaração do campo de movimento do arquivo de designer para o arquivo code-behind.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlAdversario;
-
-        /// <summary>
         /// Controle butProcurar.
         /// </summary>
         /// <remarks>

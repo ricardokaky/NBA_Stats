@@ -19,28 +19,6 @@ namespace NBAStats
         private static readonly HtmlDocument JogadorHtml = new HtmlDocument();
         private static List<HtmlNode> JogadorStats;
         private WebDriver Browser;
-        private readonly List<string> lstAtributos = new List<string>()
-        {
-            "date_game",
-            "team_id",
-            "opp_id",
-            "game_result",
-            "mp",
-            "fg",
-            "fga",
-            "fg3",
-            "fg3a",
-            "fg3_pct",
-            "ft",
-            "fta",
-            "ft_pct",
-            "trb",
-            "ast",
-            "stl",
-            "blk",
-            "tov",
-            "pts"
-        };
         private static List<Partida> Partidas;
         private static string UrlEspeciaisDeJogadores;
         private static string UrlAlternativasDeJogadores;
@@ -151,7 +129,16 @@ namespace NBAStats
                     break;
                 }
 
-                Partidas.Add(new Partida(dataHora.Replace("\r\n", " "), timeCasa + " x " + timeFora));
+                if (timeCasa == "Los Angeles Clippers")
+                {
+                    timeCasa = "LA Clippers";
+                }
+                else if (timeFora == "Los Angeles Clippers")
+                {
+                    timeFora = "LA Clippers";
+                }
+
+                Partidas.Add(new Partida(dataHora.Replace("\r\n", " "), timeCasa, timeFora));
             }
 
             if (Partidas.Count > 0)
@@ -332,9 +319,11 @@ namespace NBAStats
                             return;
                         }
 
+                        jogador.Time = Browser.FindElement(By.XPath("//a[@class='AnchorLink clr-black']")).GetAttribute("innerText");
+
                         ProcessarStats(jogador);
 
-                        Analisar(jogador);
+                        Analisar(partida, jogador);
                     }
                 }
 
@@ -366,6 +355,12 @@ namespace NBAStats
                     break;
                 case "Royce ONeale":
                     nomeTratado = "Royce O'Neale";
+                    break;
+                case "DeAnthony Melton":
+                    nomeTratado = "De'Anthony Melton";
+                    break;
+                case "DeAaron Fox":
+                    nomeTratado = "De'Aaron Fox";
                     break;
                 default:
                     nomeTratado = nomeJogador;
@@ -437,47 +432,12 @@ namespace NBAStats
             }
         }
 
-        private void ProcessarDuploETriploDuplo(Jogador jogador)
-        {
-            lblDoubleDouble.Visible = true;
-            lblTripleDouble.Visible = true;
-
-            double porcentDuploDuplo = (jogador.Historico.Partidas.Where(x => x.DuploDuplo).Count() * 100) / jogador.Historico.Partidas.Count();
-            double porcentTriploDuplo = (jogador.Historico.Partidas.Where(x => x.TriploDuplo).Count() * 100) / jogador.Historico.Partidas.Count();
-
-            if (porcentDuploDuplo <= 40)
-            {
-                lblDoubleDouble.ForeColor = System.Drawing.Color.Red;
-            }
-            else if (porcentDuploDuplo > 40 && porcentDuploDuplo <= 60)
-            {
-                lblDoubleDouble.ForeColor = System.Drawing.Color.Blue;
-            }
-            else
-            {
-                lblDoubleDouble.ForeColor = System.Drawing.Color.LightGreen;
-            }
-
-            if (porcentTriploDuplo <= 40)
-            {
-                lblTripleDouble.ForeColor = System.Drawing.Color.Red;
-            }
-            else if (porcentTriploDuplo > 40 && porcentTriploDuplo <= 60)
-            {
-                lblTripleDouble.ForeColor = System.Drawing.Color.Blue;
-            }
-            else
-            {
-                lblTripleDouble.ForeColor = System.Drawing.Color.LightGreen;
-            }
-        }
-
         private PartidaJogador ProcessarPartida(List<HtmlNode> nodes)
         {
             var dicStats = new Dictionary<string, string>()
             {
                 { "Data", null },
-                { "Adversario", null },
+                { "auxAdversario", null },
                 { "Resultado", null },
                 { "Minutos", null },
                 { "auxCestas2", null },
@@ -500,10 +460,6 @@ namespace NBAStats
                 {
                     text = text.Substring(text.IndexOf(" ") + 1);
                 }
-                else if (i == 1)
-                {
-                    text = text.Replace("vs", "");
-                }
                 else if (i == 2)
                 {
                     text = text.Insert(1, " ");
@@ -515,255 +471,295 @@ namespace NBAStats
             return PartidaJogador.DictionaryDePara(dicStats);
         }
 
-        private void ProcessarStatsAdversario(Jogador jogador)
+        private void Analisar(Partida partida, Jogador jogador)
         {
-            var nodes = JogadorStats.Where(z => z.ChildNodes.Where(x => x.Name == "td" && x.Attributes.Where(y => y.Value == "opp_id").Count() > 0 && x.InnerText == ddlAdversario.SelectedValue).Count() > 0).ToList();
+            string adversario = "";
 
-            int quantJogosAdv = nodes.Count();
-
-            if (quantJogosAdv > 0)
+            if (partida.TimeCasa == jogador.Time)
             {
-                lblPartidasContraAdv.Visible = true;
-                lblPartidasContraAdv.Text = "Partidas Contra " + ddlAdversario.SelectedItem.Text;
-
-                for (int i = 0; i < quantJogosAdv; i++)
-                {
-                    var childNodes = nodes[i].ChildNodes.Where(x => x.Name == "td" && x.Attributes.Where(y => y.Name == "data-stat" && lstAtributos.Contains(y.Value)).Count() > 0).ToList();
-                    jogador.Historico.PartidasContraAdv.Add(ProcessarPartida(childNodes));
-                }
-
-                ucPartidasContraAdv.Prepara(jogador.Historico.PartidasContraAdv);
-
-                if (quantJogosAdv > 1)
-                {
-                    lblMediasContraAdv.Visible = true;
-                    lblMediasContraAdv.Text = "Médias Contra " + ddlAdversario.SelectedItem.Text;
-
-                    ucMediasContraAdv.Prepara(jogador.Historico.PartidasContraAdv, jogador.Historico.MediasContraAdv);
-                }
-                else
-                {
-                    ucMediasContraAdv.Visible = false;
-                    lblMediasContraAdv.Visible = false;
-                }
+                adversario = SiglaTime(partida.TimeFora);
             }
             else
             {
-                ucPartidasContraAdv.Visible = false;
-                ucMediasContraAdv.Visible = false;
-                lblPartidasContraAdv.Visible = false;
-                lblMediasContraAdv.Visible = false;
+                adversario = SiglaTime(partida.TimeCasa);
             }
-        }
 
-        private void Analisar(Jogador jogador)
-        {
-            var lstPontos = jogador.Historico.Partidas.Select(x => x.Pontos).ToList();
-            var lstRebotes = jogador.Historico.Partidas.Select(x => x.Rebotes).ToList();
-            var lstAssistencias = jogador.Historico.Partidas.Select(x => x.Assistencias).ToList();
-            var lstCestas3 = jogador.Historico.Partidas.Select(x => x.Cestas3).ToList();
-            var lstRoubos = jogador.Historico.Partidas.Select(x => x.Roubos).ToList();
-            var lstBloqueios = jogador.Historico.Partidas.Select(x => x.Bloqueios).ToList();
-            var lstPontosRebotesAssistencias = jogador.Historico.Partidas.Select(x => x.PontosAssistenciasRebotes).ToList();
+            var jaJogouContra = jogador.Historico.Partidas.Where(x => x.Adversario == adversario).Count() > 0;
+
+            var EmCasa = partida.TimeCasa == jogador.Time;
+
+            var jaJogouEmCasaOuFora = jogador.Historico.Partidas.Where(x => x.EmCasa == EmCasa).Count() > 0;
 
             foreach (Linha linha in jogador.Linhas)
             {
-                switch (linha.Nome)
+                if (linha.Nome != "Double Double" && linha.Nome != "Triple Double")
                 {
-                    case "Pontos Mais/Menos":
-                        VerificaOcorrenciasLinha(lstPontos, linha);
-                        break;
-                    case "Rebotes Mais/Menos":
-                        VerificaOcorrenciasLinha(lstRebotes, linha);
-                        break;
-                    case "Assistências Mais/Menos":
-                        VerificaOcorrenciasLinha(lstAssistencias, linha);
-                        break;
-                    case "Total Arremessos de três pontos Marcados +/-":
-                        VerificaOcorrenciasLinha(lstCestas3, linha);
-                        break;
-                    case "Total de 2 pontos marcados mais/menos":
-                        var lstCestas2 = jogador.Historico.Partidas.Select(x => x.Cestas2).ToList();
-                        VerificaOcorrenciasLinha(lstCestas2, linha);
-                        break;
-                    case "Roubos Mais/Menos":
-                        VerificaOcorrenciasLinha(lstRoubos, linha);
-                        break;
-                    case "Bloqueios Mais/Menos":
-                        VerificaOcorrenciasLinha(lstBloqueios, linha);
-                        break;
-                    case "Turnover Mais/Menos":
-                        var lstTurnovers = jogador.Historico.Partidas.Select(x => x.InversoesPosse).ToList();
-                        VerificaOcorrenciasLinha(lstTurnovers, linha);
-                        break;
-                    case "Pontos + Rebotes + Assistências Mais/Menos":
-                        VerificaOcorrenciasLinha(lstPontosRebotesAssistencias, linha);
-                        break;
-                    case "Pontos + Rebotes Mais/Menos":
-                        var lstPontosRebotes = jogador.Historico.Partidas.Select(x => x.PontosRebotes).ToList();
-                        VerificaOcorrenciasLinha(lstPontosRebotes, linha);
-                        break;
-                    case "Pontos + Assistências Mais/Menos":
-                        var lstPontosAssistencias = jogador.Historico.Partidas.Select(x => x.PontosAssistencias).ToList();
-                        VerificaOcorrenciasLinha(lstPontosAssistencias, linha);
-                        break;
-                    case "Rebotes + Assistências Mais/Menos":
-                        var lstRebotesAssistencias = jogador.Historico.Partidas.Select(x => x.AssistenciasRebotes).ToList();
-                        VerificaOcorrenciasLinha(lstRebotesAssistencias, linha);
-                        break;
-                    case "Pontos + Bloqueios Mais/Menos":
-                        var lstPontosBloqueios = jogador.Historico.Partidas.Select(x => x.PontosBloqueios).ToList();
-                        VerificaOcorrenciasLinha(lstPontosBloqueios, linha);
-                        break;
-                    case "Roubadas + Bloqueios Mais/Menos":
-                        var lstRoubosBloqueios = jogador.Historico.Partidas.Select(x => x.RoubosBloqueios).ToList();
-                        VerificaOcorrenciasLinha(lstRoubosBloqueios, linha);
-                        break;
-                    case "Faltas cometidas Mais/Menos":
-                        var lstFaltas = jogador.Historico.Partidas.Select(x => x.Faltas).ToList();
-                        VerificaOcorrenciasLinha(lstFaltas, linha);
-                        break;
-                    case "Tentativas de lançamentos de três pontos mais/menos":
-                        var lstCestas3Tentativas = jogador.Historico.Partidas.Select(x => x.Cestas3Tentativas).ToList();
-                        VerificaOcorrenciasLinha(lstCestas3Tentativas, linha);
-                        break;
-                    case "Tentativas de lançamentos de dois pontos mais/menos":
-                        var lstCestas2Tentativas = jogador.Historico.Partidas.Select(x => x.Cestas2Tentativas).ToList();
-                        VerificaOcorrenciasLinha(lstCestas2Tentativas, linha);
-                        break;
-                    case "Lances livres marcados Mais/Menos":
-                        var lstLancesLivres = jogador.Historico.Partidas.Select(x => x.LancesLivres).ToList();
-                        VerificaOcorrenciasLinha(lstLancesLivres, linha);
-                        break;
-                    case "Total de Lances livres Mais/Menos":
-                        var lstLancesLivresTentativas = jogador.Historico.Partidas.Select(x => x.LancesLivresTentativas).ToList();
-                        VerificaOcorrenciasLinha(lstLancesLivresTentativas, linha);
-                        break;
-                    case "Tempo de jogo dos jogadores mais/menos":
-                        var lstMinutos = jogador.Historico.Partidas.Select(x => x.Minutos).ToList();
-                        VerificaOcorrenciasLinha(lstMinutos, linha);
-                        break;
-                    case "Double Double":
-                        var lstDuploDuplo = jogador.Historico.Partidas.Select(x => x.DuploDuplo).ToList();
-                        VerificaOcorrenciasDuploETriplo(lstDuploDuplo, linha);
-                        break;
-                    case "Triple Double":
-                        var lstTriploDuplo = jogador.Historico.Partidas.Select(x => x.TriploDuplo).ToList();
-                        VerificaOcorrenciasDuploETriplo(lstTriploDuplo, linha);
-                        break;
-                    default:
-                        break;
+                    var lst = jogador.Historico.Partidas.Select(x => Convert.ToInt32(x.GetType().GetProperty(PropriedadeLinha(linha.Nome)).GetValue(x))).ToList();
+
+                    VerificaOcorrenciasLinha(lst, linha);
+
+                    linha.MediaTemporada = lst.Average();
+
+                    if (jaJogouContra)
+                    {
+                        linha.MediaAdversario = jogador.Historico.Partidas.Where(x => x.Adversario == adversario).Select(x => Convert.ToInt32(x.GetType().GetProperty(PropriedadeLinha(linha.Nome)).GetValue(x))).ToList().Average();
+                    }
+
+                    if (jaJogouEmCasaOuFora)
+                    {
+                        linha.MediaCasaOuFora = jogador.Historico.Partidas.Where(x => x.EmCasa == EmCasa).Select(x => Convert.ToInt32(x.GetType().GetProperty(PropriedadeLinha(linha.Nome)).GetValue(x))).ToList().Average();
+                    }
+
+                    linha.Percent5PartidasOver = ((double)lst.Take(5).Where(x => x > linha.Valor).Count() / 5) * 100;
+                    linha.Percent5PartidasUnder = ((double)lst.Take(5).Where(x => x < linha.Valor).Count() / 5) * 100;
+
+                    linha.Percent10PartidasOver = ((double)lst.Take(10).Where(x => x > linha.Valor).Count() / 10) * 100;
+                    linha.Percent10PartidasUnder = ((double)lst.Take(10).Where(x => x < linha.Valor).Count() / 10) * 100;
+
+                    linha.PercentTemporadaOver = ((double)lst.Where(x => x > linha.Valor).Count() / jogador.Historico.Partidas.Count()) * 100;
+                    linha.PercentTemporadaUnder = ((double)lst.Where(x => x < linha.Valor).Count() / jogador.Historico.Partidas.Count()) * 100;
+                }
+                else
+                {
+                    var lst = jogador.Historico.Partidas.Select(x => Convert.ToBoolean(x.GetType().GetProperty(PropriedadeLinha(linha.Nome)).GetValue(x))).ToList();
+                    VerificaOcorrenciasDuploETriplo(lst, linha);
+
+                    if (jogador.Historico.Partidas.Count() >= 5)
+                    {
+                        linha.Percent5PartidasOver = ((double)lst.Take(5).Where(x => x).Count() / 5) * 100;
+                        linha.Percent5PartidasUnder = ((double)lst.Take(5).Where(x => !x).Count() / 5) * 100;
+                    }
+
+                    if (jogador.Historico.Partidas.Count() >= 10)
+                    {
+                        linha.Percent10PartidasOver = ((double)lst.Take(10).Where(x => x).Count() / 10) * 100;
+                        linha.Percent10PartidasUnder = ((double)lst.Take(10).Where(x => !x).Count() / 10) * 100;
+                    }
+
+                    linha.PercentTemporadaOver = ((double)lst.Where(x => x).Count() / jogador.Historico.Partidas.Count()) * 100;
+                    linha.PercentTemporadaUnder = ((double)lst.Where(x => !x).Count() / jogador.Historico.Partidas.Count()) * 100;
                 }
             }
 
             foreach (LinhaAlternativa linhaAlternativa in jogador.LinhasAlternativas)
             {
-                switch (linhaAlternativa.Nome)
+                var lst = jogador.Historico.Partidas.Select(x => Convert.ToInt32(x.GetType().GetProperty(PropriedadeLinha(linhaAlternativa.Nome)).GetValue(x))).ToList();
+
+                VerificaOcorrenciasLinhaAlternativa(lst, linhaAlternativa.Linhas);
+
+                linhaAlternativa.Linhas.ForEach(x => x.MediaTemporada = lst.Average());
+
+                if (jaJogouContra)
                 {
-                    case "Total de Pontos":
-                        VerificaOcorrenciasLinhaAlternativa(lstPontos, linhaAlternativa.Linhas);
-                        break;
-                    case "Total de Rebotes":
-                        VerificaOcorrenciasLinhaAlternativa(lstRebotes, linhaAlternativa.Linhas);
-                        break;
-                    case "Total de Assistências":
-                        VerificaOcorrenciasLinhaAlternativa(lstAssistencias, linhaAlternativa.Linhas);
-                        break;
-                    case "Total Arremessos de três pontos Marcados":
-                        VerificaOcorrenciasLinhaAlternativa(lstCestas3, linhaAlternativa.Linhas);
-                        break;
-                    case "Total de Roubos":
-                        VerificaOcorrenciasLinhaAlternativa(lstRoubos, linhaAlternativa.Linhas);
-                        break;
-                    case "Total de tocos":
-                        VerificaOcorrenciasLinhaAlternativa(lstBloqueios, linhaAlternativa.Linhas);
-                        break;
-                    case "Total de Pontos, Rebotes e Assistências":
-                        VerificaOcorrenciasLinhaAlternativa(lstPontosRebotesAssistencias, linhaAlternativa.Linhas);
-                        break;
-                    default:
-                        break;
+                    linhaAlternativa.Linhas.ForEach(x => x.MediaAdversario = jogador.Historico.Partidas.Where(y => y.Adversario == adversario).Select(y => Convert.ToInt32(y.GetType().GetProperty(PropriedadeLinha(linhaAlternativa.Nome)).GetValue(y))).ToList().Average());
                 }
+
+                if (jaJogouEmCasaOuFora)
+                {
+                    linhaAlternativa.Linhas.ForEach(x => x.MediaCasaOuFora = jogador.Historico.Partidas.Where(y => y.EmCasa == EmCasa).Select(y => Convert.ToInt32(y.GetType().GetProperty(PropriedadeLinha(linhaAlternativa.Nome)).GetValue(y))).ToList().Average());
+                }
+
+                if (jogador.Historico.Partidas.Count() >= 5)
+                {
+                    linhaAlternativa.Linhas.ForEach(x => x.Percent5PartidasOver = ((double)lst.Take(5).Where(y => y > x.Valor).Count() / 5) * 100);
+                }
+
+                if (jogador.Historico.Partidas.Count() >= 10)
+                {
+                    linhaAlternativa.Linhas.ForEach(x => x.Percent10PartidasOver = ((double)lst.Take(10).Where(y => y > x.Valor).Count() / 10) * 100);
+                }
+
+                linhaAlternativa.Linhas.ForEach(x => x.PercentTemporadaOver = ((double)lst.Where(y => y > x.Valor).Count() / jogador.Historico.Partidas.Count()) * 100);
             }
         }
 
-        private void GerarPlanilha()
+        private string PropriedadeLinha(string nomeLinha)
         {
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            string propriedade = "";
 
-            if (File.Exists(@"C:\Users\ricardo.queiroz\Downloads\Linhas Assertivas.xls"))
+            switch (nomeLinha)
             {
-                File.Delete(@"C:\Users\ricardo.queiroz\Downloads\Linhas Assertivas.xls");
+                case "Pontos Mais/Menos":
+                case "Total de Pontos":
+                    propriedade = "Pontos";
+                    break;
+                case "Rebotes Mais/Menos":
+                case "Total de Rebotes":
+                    propriedade = "Rebotes";
+                    break;
+                case "Assistências Mais/Menos":
+                case "Total de Assistências":
+                    propriedade = "Assistencias";
+                    break;
+                case "Total Arremessos de três pontos Marcados +/-":
+                case "Total Arremessos de três pontos Marcados":
+                    propriedade = "Cestas3";
+                    break;
+                case "Total de 2 pontos marcados mais/menos":
+                    propriedade = "Cestas2";
+                    break;
+                case "Roubos Mais/Menos":
+                case "Total de Roubos":
+                    propriedade = "Roubos";
+                    break;
+                case "Bloqueios Mais/Menos":
+                case "Total de tocos":
+                    propriedade = "Bloqueios";
+                    break;
+                case "Turnover Mais/Menos":
+                    propriedade = "InversoesPosse";
+                    break;
+                case "Pontos + Rebotes + Assistências Mais/Menos":
+                case "Total de Pontos, Rebotes e Assistências":
+                    propriedade = "PontosAssistenciasRebotes";
+                    break;
+                case "Pontos + Rebotes Mais/Menos":
+                    propriedade = "PontosRebotes";
+                    break;
+                case "Pontos + Assistências Mais/Menos":
+                    propriedade = "PontosAssistencias";
+                    break;
+                case "Rebotes + Assistências Mais/Menos":
+                    propriedade = "AssistenciasRebotes";
+                    break;
+                case "Pontos + Bloqueios Mais/Menos":
+                    propriedade = "PontosBloqueios";
+                    break;
+                case "Roubadas + Bloqueios Mais/Menos":
+                    propriedade = "RoubosBloqueios";
+                    break;
+                case "Faltas cometidas Mais/Menos":
+                    propriedade = "Faltas";
+                    break;
+                case "Tentativas de lançamentos de três pontos mais/menos":
+                    propriedade = "Cestas3Tentativas";
+                    break;
+                case "Tentativas de lançamentos de dois pontos mais/menos":
+                    propriedade = "Cestas2Tentativas";
+                    break;
+                case "Lances livres marcados Mais/Menos":
+                    propriedade = "LancesLivres";
+                    break;
+                case "Total de Lances livres Mais/Menos":
+                    propriedade = "LancesLivresTentativas";
+                    break;
+                case "Tempo de jogo dos jogadores mais/menos":
+                    propriedade = "Minutos";
+                    break;
+                case "Double Double":
+                    propriedade = "DuploDuplo";
+                    break;
+                case "Triple Double":
+                    propriedade = "TriploDuplo";
+                    break;
+                default:
+                    break;
             }
 
-            using (var package = new ExcelPackage(@"C:\Users\ricardo.queiroz\Downloads\Linhas Assertivas.xls"))
+            return propriedade;
+        }
+
+        private string SiglaTime(string time)
+        {
+            string sigla = "";
+
+            switch (time.ToUpper())
             {
-                var sheet = package.Workbook.Worksheets.Add("PARTIDAS");
-
-                int index = 1;
-
-                for (int i = 0; i < Partidas.Count(); i++)
-                {
-                    for (int i2 = 0; i2 < Partidas[i].Jogadores.Count(); i2++)
-                    {
-                        for (int i3 = 0; i3 < Partidas[i].Jogadores[i2].Linhas.Count(); i3++)
-                        {
-                            if ((Partidas[i].Jogadores[i2].Linhas[i3].SequenciaUnder > 0 && Partidas[i].Jogadores[i2].Linhas[i3].OddUnder == 0) ||
-                                (Partidas[i].Jogadores[i2].Linhas[i3].SequenciaOver > 0 && Partidas[i].Jogadores[i2].Linhas[i3].OddOver == 0))
-                            {
-                                continue;
-                            }
-
-                            sheet.Cells[$"A{index}"].Value = Partidas[i].Times;
-                            sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
-
-                            var nomeLinha = Partidas[i].Jogadores[i2].Linhas[i3].Nome;
-
-                            sheet.Cells[$"C{index}"].Value = nomeLinha;
-
-                            if (nomeLinha != "Double Double" && nomeLinha != "Triple Double")
-                            {
-                                sheet.Cells[$"D{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Valor;
-                            }
-
-                            if (Partidas[i].Jogadores[i2].Linhas[i3].SequenciaUnder > 0)
-                            {
-                                sheet.Cells[$"E{index}"].Value = "SIM";
-                                sheet.Cells[$"F{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].OddUnder.ToString().Replace(".", ",");
-                                sheet.Cells[$"G{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].SequenciaUnder;
-                            }
-                            else
-                            {
-                                sheet.Cells[$"F{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].OddOver.ToString().Replace(".", ",");
-                                sheet.Cells[$"G{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].SequenciaOver;
-                            }
-
-                            index++;
-                        }
-
-                        for (int i3 = 0; i3 < Partidas[i].Jogadores[i2].LinhasAlternativas.Where(x => x.Linhas.Where(y => y.SequenciaOver > 0).Count() > 0).Count(); i3++)
-                        {
-                            var linhasSequencia = Partidas[i].Jogadores[i2].LinhasAlternativas[i3].Linhas.Where(x => x.SequenciaOver > 0).ToList();
-
-                            for (int i4 = 0; i4 < linhasSequencia.Count(); i4++)
-                            {
-                                var linha = Partidas[i].Jogadores[i2].LinhasAlternativas[i3].Linhas.Find(x => x.Nome == linhasSequencia[i4].Nome && x.Valor == linhasSequencia[i4].Valor);
-
-                                sheet.Cells[$"A{index}"].Value = Partidas[i].Times;
-                                sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
-                                sheet.Cells[$"C{index}"].Value = Partidas[i].Jogadores[i2].LinhasAlternativas[i3].Nome;
-                                sheet.Cells[$"D{index}"].Value = linha.Valor;
-                                sheet.Cells[$"F{index}"].Value = linha.OddOver.ToString().Replace(".", ",");
-                                sheet.Cells[$"G{index}"].Value = linha.SequenciaOver;
-
-                                index++;
-                            }
-                        }
-                    }
-                }
-
-                package.Save();
+                case "DALLAS MAVERICKS":
+                    sigla = "DAL";
+                    break;
+                case "UTAH JAZZ":
+                    sigla = "UTAH";
+                    break;
+                case "PHOENIX SUNS":
+                    sigla = "PHX";
+                    break;
+                case "LA CLIPPERS":
+                    sigla = "LAC";
+                    break;
+                case "HOUSTON ROCKETS":
+                    sigla = "HOU";
+                    break;
+                case "MINNESOTA TIMBERWOLVES":
+                    sigla = "MIN";
+                    break;
+                case "CHICAGO BULLS":
+                    sigla = "CHI";
+                    break;
+                case "GOLDEN STATE WARRIORS":
+                    sigla = "GS";
+                    break;
+                case "NEW ORLEANS PELICANS":
+                    sigla = "NO";
+                    break;
+                case "INDIANA PACERS":
+                    sigla = "IND";
+                    break;
+                case "NEW YORK KNICKS":
+                    sigla = "NY";
+                    break;
+                case "BOSTON CELTICS":
+                    sigla = "BOS";
+                    break;
+                case "SAN ANTONIO SPURS":
+                    sigla = "SA";
+                    break;
+                case "PORTLAND TRAIL BLAZERS":
+                    sigla = "BOS";
+                    break;
+                case "MEMPHIS GRIZZLIES":
+                    sigla = "MEM";
+                    break;
+                case "SACRAMENTO KINGS":
+                    sigla = "SAC";
+                    break;
+                case "PHILADELPHIA 76ERS":
+                    sigla = "PHI";
+                    break;
+                case "ATLANTA HAWKS":
+                    sigla = "ATL";
+                    break;
+                case "CHARLOTTE HORNETS":
+                    sigla = "CHA";
+                    break;
+                case "MIAMI HEAT":
+                    sigla = "MIA";
+                    break;
+                case "ORLANDO MAGIC":
+                    sigla = "ORL";
+                    break;
+                case "WASHINGTON WIZARDS":
+                    sigla = "WSH";
+                    break;
+                case "DENVER NUGGETS":
+                    sigla = "DEN";
+                    break;
+                case "DETROIT PISTONS":
+                    sigla = "DET";
+                    break;
+                case "CLEVELAND CAVALIERS":
+                    sigla = "CLE";
+                    break;
+                case "MILWAUKEE BUCKS":
+                    sigla = "MIL";
+                    break;
+                case "BROOKLYN NETS":
+                    sigla = "BKN";
+                    break;
+                case "TORONTO RAPTORS":
+                    sigla = "TOR";
+                    break;
+                case "OKLAHOMA CITY THUNDER":
+                    sigla = "OKC";
+                    break;
+                case "LOS ANGELES LAKERS":
+                    sigla = "LAL";
+                    break;
+                default:
+                    break;
             }
+
+            return sigla;
         }
 
         private void VerificaOcorrenciasLinha(List<int> lista, Linha linha)
@@ -830,6 +826,146 @@ namespace NBAStats
                 {
                     linhas[i].SequenciaOver = lista.Count();
                 }
+            }
+        }
+
+        private void GerarPlanilha()
+        {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            if (File.Exists(@"C:\Users\ricardo.queiroz\Downloads\Linhas Assertivas.xls"))
+            {
+                File.Delete(@"C:\Users\ricardo.queiroz\Downloads\Linhas Assertivas.xls");
+            }
+
+            using (var package = new ExcelPackage(@"C:\Users\ricardo.queiroz\Downloads\Linhas Assertivas.xls"))
+            {
+                var sheet = package.Workbook.Worksheets.Add("PARTIDAS");
+
+                int index = 1;
+
+                for (int i = 0; i < Partidas.Count(); i++)
+                {
+                    for (int i2 = 0; i2 < Partidas[i].Jogadores.Count(); i2++)
+                    {
+                        for (int i3 = 0; i3 < Partidas[i].Jogadores[i2].Linhas.Count(); i3++)
+                        {
+                            if ((Partidas[i].Jogadores[i2].Linhas[i3].SequenciaUnder > 0 && Partidas[i].Jogadores[i2].Linhas[i3].OddUnder == 0) ||
+                                (Partidas[i].Jogadores[i2].Linhas[i3].SequenciaOver > 0 && Partidas[i].Jogadores[i2].Linhas[i3].OddOver == 0))
+                            {
+                                continue;
+                            }
+
+                            var nomeLinha = Partidas[i].Jogadores[i2].Linhas[i3].Nome;
+
+                            if (nomeLinha != "Double Double" && nomeLinha != "Triple Double")
+                            {
+                                string mediaAdversario = "";
+                                string mediaCasaOuFora = "";
+
+                                if (Partidas[i].Jogadores[i2].Linhas[i3].MediaAdversario != null)
+                                {
+                                    mediaAdversario = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].MediaAdversario).ToString("0.00");
+                                }
+
+                                if (Partidas[i].Jogadores[i2].Linhas[i3].MediaCasaOuFora != null)
+                                {
+                                    mediaCasaOuFora = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].MediaCasaOuFora).ToString("0.00");
+                                }
+
+                                sheet.Cells[$"A{index}"].Value = Partidas[i].Times;
+                                sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
+                                sheet.Cells[$"C{index}"].Value = nomeLinha;
+                                sheet.Cells[$"D{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Valor;
+                                sheet.Cells[$"F{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].OddOver.ToString().Replace(".", ",");
+                                sheet.Cells[$"G{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].MediaTemporada.ToString("0.00");
+                                sheet.Cells[$"H{index}"].Value = mediaAdversario;
+                                sheet.Cells[$"I{index}"].Value = mediaCasaOuFora;
+                                sheet.Cells[$"J{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasOver.ToString() + "%";
+                                sheet.Cells[$"K{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasOver.ToString() + "%";
+                                sheet.Cells[$"L{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].PercentTemporadaOver.ToString("0.00") + "%";
+                                sheet.Cells[$"M{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].SequenciaOver;
+
+                                index++;
+
+                                sheet.Cells[$"A{index}"].Value = Partidas[i].Times;
+                                sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
+                                sheet.Cells[$"C{index}"].Value = nomeLinha;
+                                sheet.Cells[$"D{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Valor;
+                                sheet.Cells[$"E{index}"].Value = "SIM";
+                                sheet.Cells[$"F{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].OddUnder.ToString().Replace(".", ",");
+                                sheet.Cells[$"G{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].MediaTemporada.ToString("0.00");
+                                sheet.Cells[$"H{index}"].Value = mediaAdversario;
+                                sheet.Cells[$"I{index}"].Value = mediaCasaOuFora;
+                                sheet.Cells[$"J{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasUnder.ToString() + "%";
+                                sheet.Cells[$"K{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasUnder.ToString() + "%";
+                                sheet.Cells[$"L{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].PercentTemporadaUnder.ToString("0.00") + "%";
+                                sheet.Cells[$"M{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].SequenciaUnder;
+                            }
+                            else
+                            {
+                                sheet.Cells[$"A{index}"].Value = Partidas[i].Times;
+                                sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
+                                sheet.Cells[$"C{index}"].Value = nomeLinha;
+                                sheet.Cells[$"F{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].OddOver.ToString().Replace(".", ",");
+                                sheet.Cells[$"J{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasOver.ToString() + "%";
+                                sheet.Cells[$"K{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasOver.ToString() + "%";
+                                sheet.Cells[$"L{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].PercentTemporadaOver.ToString("0.00") + "%";
+                                sheet.Cells[$"M{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].SequenciaOver;
+
+                                index++;
+
+                                sheet.Cells[$"A{index}"].Value = Partidas[i].Times;
+                                sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
+                                sheet.Cells[$"C{index}"].Value = nomeLinha;
+                                sheet.Cells[$"E{index}"].Value = "SIM";
+                                sheet.Cells[$"F{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].OddUnder.ToString().Replace(".", ",");
+                                sheet.Cells[$"J{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasUnder.ToString() + "%";
+                                sheet.Cells[$"K{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasUnder.ToString() + "%";
+                                sheet.Cells[$"L{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].PercentTemporadaUnder.ToString("0.00") + "%";
+                                sheet.Cells[$"M{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].SequenciaUnder;
+                            }
+
+                            index++;
+                        }
+
+                        for (int i3 = 0; i3 < Partidas[i].Jogadores[i2].LinhasAlternativas.Count(); i3++)
+                        {
+                            var linhasSequencia = Partidas[i].Jogadores[i2].LinhasAlternativas[i3].Linhas.ToList();
+
+                            for (int i4 = 0; i4 < linhasSequencia.Count(); i4++)
+                            {
+                                var linha = Partidas[i].Jogadores[i2].LinhasAlternativas[i3].Linhas.Find(x => x.Nome == linhasSequencia[i4].Nome && x.Valor == linhasSequencia[i4].Valor);
+
+                                sheet.Cells[$"A{index}"].Value = Partidas[i].Times;
+                                sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
+                                sheet.Cells[$"C{index}"].Value = Partidas[i].Jogadores[i2].LinhasAlternativas[i3].Nome;
+                                sheet.Cells[$"D{index}"].Value = linha.Valor;
+                                sheet.Cells[$"F{index}"].Value = linha.OddOver.ToString().Replace(".", ",");
+                                sheet.Cells[$"G{index}"].Value = linha.MediaTemporada.ToString("{0.00}");
+
+                                if (linha.MediaAdversario != null)
+                                {
+                                    sheet.Cells[$"H{index}"].Value = Convert.ToDouble(linha.MediaAdversario).ToString("0.00");
+                                }
+
+                                if (linha.MediaCasaOuFora != null)
+                                {
+                                    sheet.Cells[$"I{index}"].Value = Convert.ToDouble(linha.MediaCasaOuFora).ToString("0.00");
+                                }
+
+                                sheet.Cells[$"J{index}"].Value = linha.Percent5PartidasOver.ToString() + "%";
+                                sheet.Cells[$"K{index}"].Value = linha.Percent10PartidasOver.ToString() + "%";
+                                sheet.Cells[$"L{index}"].Value = linha.PercentTemporadaOver.ToString("0.00") + "%";
+                                sheet.Cells[$"M{index}"].Value = linha.SequenciaOver;
+
+                                index++;
+                            }
+                        }
+                    }
+                }
+
+                package.Save();
             }
         }
 

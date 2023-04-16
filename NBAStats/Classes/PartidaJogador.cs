@@ -7,11 +7,11 @@ namespace NBAStats.Classes
     public class PartidaJogador
     {
         private string mData;
+        public string auxAdversario { get; set; }
         public string auxCestas2 { get; set; }
         public string auxCestas3 { get; set; }
         public string auxLancesLivres { get; set; }
         public string Time { get; set; }
-        public string Adversario { get; set; }
         public string Resultado { get; set; }
         public int Minutos { get; set; }        
         public int Rebotes { get; set; }
@@ -21,6 +21,16 @@ namespace NBAStats.Classes
         public int Faltas { get; set; }
         public int InversoesPosse { get; set; }
         public int Pontos { get; set; }
+
+        public string Adversario
+        {
+            get { return auxAdversario.Replace("vs", "").Replace("@", ""); }
+        }
+
+        public bool EmCasa
+        {
+            get { return auxAdversario.StartsWith("vs"); }
+        }
 
         public string Data
         {
