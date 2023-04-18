@@ -172,7 +172,7 @@ namespace NBAStats
             {
                 var titulo = menu.FindElement(By.XPath(".//a[@class='event__header__title__link']")).GetAttribute("innerText");
 
-                var partida = Partidas.Find(x => x.Times == titulo.Replace("-", "x"));
+                var partida = Partidas.Find(x => x.Times == titulo.Replace("-", "x").Replace("Los Angeles Clippers", "LA Clippers"));
 
                 if (partida == null)
                 {
@@ -361,6 +361,9 @@ namespace NBAStats
                     break;
                 case "DeAaron Fox":
                     nomeTratado = "De'Aaron Fox";
+                    break;
+                case "NahShon Hyland":
+                    nomeTratado = "Bones Hyland";
                     break;
                 default:
                     nomeTratado = nomeJogador;
@@ -858,60 +861,106 @@ namespace NBAStats
 
                             var nomeLinha = Partidas[i].Jogadores[i2].Linhas[i3].Nome;
 
+                            double oddOver = Partidas[i].Jogadores[i2].Linhas[i3].OddOver;
+                            double auxPercent5Over = -1;
+                            double auxPercent10Over = -1;
+                            double auxPercentTemporadaOver = Partidas[i].Jogadores[i2].Linhas[i3].PercentTemporadaOver;
+                            double auxSequenciaOver = Partidas[i].Jogadores[i2].Linhas[i3].SequenciaOver;
+
+                            double oddUnder = Partidas[i].Jogadores[i2].Linhas[i3].OddUnder;
+                            double auxPercent5Under = -1;
+                            double auxPercent10Under = -1;
+                            double auxPercentTemporadaUnder = Partidas[i].Jogadores[i2].Linhas[i3].PercentTemporadaUnder;
+                            double auxSequenciaUnder = Partidas[i].Jogadores[i2].Linhas[i3].SequenciaUnder;
+
                             if (nomeLinha != "Double Double" && nomeLinha != "Triple Double")
                             {
+                                double valorLinha = Partidas[i].Jogadores[i2].Linhas[i3].Valor;
+                                double mediaTemporada = Partidas[i].Jogadores[i2].Linhas[i3].MediaTemporada;
+                                double auxMediaAdversario = -1;
+                                double auxMediaCasaOuFora = -1;
                                 string mediaAdversario = "";
                                 string mediaCasaOuFora = "";
 
                                 if (Partidas[i].Jogadores[i2].Linhas[i3].MediaAdversario != null)
                                 {
-                                    mediaAdversario = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].MediaAdversario).ToString("0.00");
+                                    auxMediaAdversario = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].MediaAdversario);
+                                    mediaAdversario = auxMediaAdversario.ToString("0.00");
                                 }
 
                                 if (Partidas[i].Jogadores[i2].Linhas[i3].MediaCasaOuFora != null)
                                 {
-                                    mediaCasaOuFora = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].MediaCasaOuFora).ToString("0.00");
+                                    auxMediaCasaOuFora = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].MediaCasaOuFora);
+                                    mediaCasaOuFora = auxMediaCasaOuFora.ToString("0.00");
+                                }
+
+                                if (Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasOver != null)
+                                {
+                                    auxPercent5Over = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasOver);
+                                }
+
+                                if (Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasOver != null)
+                                {
+                                    auxPercent10Over = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasOver);
                                 }
 
                                 sheet.Cells[$"A{index}"].Value = Partidas[i].Times;
                                 sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
                                 sheet.Cells[$"C{index}"].Value = nomeLinha;
-                                sheet.Cells[$"D{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Valor;
-                                sheet.Cells[$"F{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].OddOver.ToString().Replace(".", ",");
-                                sheet.Cells[$"G{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].MediaTemporada.ToString("0.00");
+                                sheet.Cells[$"D{index}"].Value = valorLinha;
+                                sheet.Cells[$"F{index}"].Value = oddOver.ToString().Replace(".", ",");
+                                sheet.Cells[$"G{index}"].Value = mediaTemporada.ToString("0.00");
                                 sheet.Cells[$"H{index}"].Value = mediaAdversario;
                                 sheet.Cells[$"I{index}"].Value = mediaCasaOuFora;
                                 sheet.Cells[$"J{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasOver.ToString() + "%";
                                 sheet.Cells[$"K{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasOver.ToString() + "%";
-                                sheet.Cells[$"L{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].PercentTemporadaOver.ToString("0.00") + "%";
-                                sheet.Cells[$"M{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].SequenciaOver;
+                                sheet.Cells[$"L{index}"].Value = auxPercentTemporadaOver.ToString("0.00") + "%";
+                                sheet.Cells[$"M{index}"].Value = auxSequenciaOver;
+                                sheet.Cells[$"N{index}"].Value = ((oddOver * (mediaTemporada > valorLinha ? (mediaTemporada - valorLinha) * 3 : 1)) +
+                                                                 (auxMediaAdversario >= 0 ? (oddOver * (auxMediaAdversario > valorLinha ? (auxMediaAdversario - valorLinha) * 4 : 1)) : 0) +
+                                                                 (auxMediaCasaOuFora >= 0 ? (oddOver * (auxMediaCasaOuFora > valorLinha ? (auxMediaCasaOuFora - valorLinha) * 2 : 1)) : 0) +
+                                                                 (auxPercent5Over >= 0 ? (oddOver * (auxPercent5Over * 0.4)) : 0) +
+                                                                 (auxPercent10Over >= 0 ? (oddOver * (auxPercent10Over * 0.3)) : 0) +
+                                                                 (oddOver * (auxPercentTemporadaOver * 0.2)) +
+                                                                 (oddOver * auxSequenciaOver)).ToString("0.00");
 
                                 index++;
 
                                 sheet.Cells[$"A{index}"].Value = Partidas[i].Times;
                                 sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
                                 sheet.Cells[$"C{index}"].Value = nomeLinha;
-                                sheet.Cells[$"D{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Valor;
+                                sheet.Cells[$"D{index}"].Value = valorLinha;
                                 sheet.Cells[$"E{index}"].Value = "SIM";
-                                sheet.Cells[$"F{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].OddUnder.ToString().Replace(".", ",");
-                                sheet.Cells[$"G{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].MediaTemporada.ToString("0.00");
+                                sheet.Cells[$"F{index}"].Value = oddUnder.ToString().Replace(".", ",");
+                                sheet.Cells[$"G{index}"].Value = mediaTemporada.ToString("0.00");
                                 sheet.Cells[$"H{index}"].Value = mediaAdversario;
                                 sheet.Cells[$"I{index}"].Value = mediaCasaOuFora;
                                 sheet.Cells[$"J{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasUnder.ToString() + "%";
                                 sheet.Cells[$"K{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasUnder.ToString() + "%";
-                                sheet.Cells[$"L{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].PercentTemporadaUnder.ToString("0.00") + "%";
-                                sheet.Cells[$"M{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].SequenciaUnder;
+                                sheet.Cells[$"L{index}"].Value = auxPercentTemporadaUnder.ToString("0.00") + "%";
+                                sheet.Cells[$"M{index}"].Value = auxSequenciaUnder;
+                                sheet.Cells[$"N{index}"].Value = ((oddUnder * (mediaTemporada < valorLinha ? (valorLinha - mediaTemporada) * 3 : 1)) +
+                                                                 (auxMediaAdversario >= 0 ? (oddUnder * (auxMediaAdversario < valorLinha ? (valorLinha - auxMediaAdversario) * 4 : 1)) : 0) +
+                                                                 (auxMediaCasaOuFora >= 0 ? (oddUnder * (auxMediaCasaOuFora < valorLinha ? (valorLinha - auxMediaCasaOuFora) * 2 : 1)) : 0) +
+                                                                 (auxPercent5Under >= 0 ? (oddUnder * (auxPercent5Under * 0.4)) : 0) +
+                                                                 (auxPercent10Under >= 0 ? (oddUnder * (auxPercent10Under * 0.3)) : 0) +
+                                                                 (oddUnder * (auxPercentTemporadaUnder * 0.2)) +
+                                                                 (oddUnder * auxSequenciaUnder)).ToString("0.00");
                             }
                             else
                             {
                                 sheet.Cells[$"A{index}"].Value = Partidas[i].Times;
                                 sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
                                 sheet.Cells[$"C{index}"].Value = nomeLinha;
-                                sheet.Cells[$"F{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].OddOver.ToString().Replace(".", ",");
+                                sheet.Cells[$"F{index}"].Value = oddOver.ToString().Replace(".", ",");
                                 sheet.Cells[$"J{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasOver.ToString() + "%";
                                 sheet.Cells[$"K{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasOver.ToString() + "%";
-                                sheet.Cells[$"L{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].PercentTemporadaOver.ToString("0.00") + "%";
-                                sheet.Cells[$"M{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].SequenciaOver;
+                                sheet.Cells[$"L{index}"].Value = auxPercentTemporadaOver.ToString("0.00") + "%";
+                                sheet.Cells[$"M{index}"].Value = auxSequenciaOver;
+                                sheet.Cells[$"N{index}"].Value = ((auxPercent5Over >= 0 ? (oddOver * (auxPercent5Over * 0.4)) : 0) +
+                                                                 (auxPercent10Over >= 0 ? (oddOver * (auxPercent10Over * 0.3)) : 0) +
+                                                                 (oddOver * (auxPercentTemporadaOver * 0.2)) +
+                                                                 (oddOver * auxSequenciaOver)).ToString("0.00");
 
                                 index++;
 
@@ -919,11 +968,15 @@ namespace NBAStats
                                 sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
                                 sheet.Cells[$"C{index}"].Value = nomeLinha;
                                 sheet.Cells[$"E{index}"].Value = "SIM";
-                                sheet.Cells[$"F{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].OddUnder.ToString().Replace(".", ",");
+                                sheet.Cells[$"F{index}"].Value = oddUnder.ToString().Replace(".", ",");
                                 sheet.Cells[$"J{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasUnder.ToString() + "%";
                                 sheet.Cells[$"K{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasUnder.ToString() + "%";
-                                sheet.Cells[$"L{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].PercentTemporadaUnder.ToString("0.00") + "%";
-                                sheet.Cells[$"M{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].SequenciaUnder;
+                                sheet.Cells[$"L{index}"].Value = auxPercentTemporadaUnder.ToString("0.00") + "%";
+                                sheet.Cells[$"M{index}"].Value = auxSequenciaUnder;
+                                sheet.Cells[$"N{index}"].Value = ((auxPercent5Under >= 0 ? (oddUnder * (auxPercent5Under * 0.4)) : 0) +
+                                                                 (auxPercent10Under >= 0 ? (oddUnder * (auxPercent10Under * 0.3)) : 0) +
+                                                                 (oddUnder * (auxPercentTemporadaUnder * 0.2)) +
+                                                                 (oddUnder * auxSequenciaUnder)).ToString("0.00");
                             }
 
                             index++;
@@ -937,27 +990,53 @@ namespace NBAStats
                             {
                                 var linha = Partidas[i].Jogadores[i2].LinhasAlternativas[i3].Linhas.Find(x => x.Nome == linhasSequencia[i4].Nome && x.Valor == linhasSequencia[i4].Valor);
 
+                                double auxMediaAdversario = -1;
+                                double auxMediaCasaOuFora = -1;
+                                double auxPercent5Over = -1;
+                                double auxPercent10Over = -1;
+                                double auxPercentTemporadaOver = linha.PercentTemporadaOver;
+                                double auxSequenciaOver = linha.SequenciaOver;
+
                                 sheet.Cells[$"A{index}"].Value = Partidas[i].Times;
                                 sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
                                 sheet.Cells[$"C{index}"].Value = Partidas[i].Jogadores[i2].LinhasAlternativas[i3].Nome;
                                 sheet.Cells[$"D{index}"].Value = linha.Valor;
                                 sheet.Cells[$"F{index}"].Value = linha.OddOver.ToString().Replace(".", ",");
-                                sheet.Cells[$"G{index}"].Value = linha.MediaTemporada.ToString("{0.00}");
+                                sheet.Cells[$"G{index}"].Value = linha.MediaTemporada.ToString("0.00");
 
                                 if (linha.MediaAdversario != null)
                                 {
-                                    sheet.Cells[$"H{index}"].Value = Convert.ToDouble(linha.MediaAdversario).ToString("0.00");
+                                    auxMediaAdversario = Convert.ToDouble(linha.MediaAdversario);
+                                    sheet.Cells[$"H{index}"].Value = auxMediaAdversario.ToString("0.00");
                                 }
 
                                 if (linha.MediaCasaOuFora != null)
                                 {
-                                    sheet.Cells[$"I{index}"].Value = Convert.ToDouble(linha.MediaCasaOuFora).ToString("0.00");
+                                    auxMediaCasaOuFora = Convert.ToDouble(linha.MediaCasaOuFora);
+                                    sheet.Cells[$"I{index}"].Value = auxMediaCasaOuFora.ToString("0.00");
+                                }
+
+                                if (linha.Percent5PartidasOver != null)
+                                {
+                                    auxPercent5Over = Convert.ToDouble(linha.Percent5PartidasOver);
+                                }
+
+                                if (linha.Percent10PartidasOver != null)
+                                {
+                                    auxPercent10Over = Convert.ToDouble(linha.Percent10PartidasOver);
                                 }
 
                                 sheet.Cells[$"J{index}"].Value = linha.Percent5PartidasOver.ToString() + "%";
                                 sheet.Cells[$"K{index}"].Value = linha.Percent10PartidasOver.ToString() + "%";
                                 sheet.Cells[$"L{index}"].Value = linha.PercentTemporadaOver.ToString("0.00") + "%";
                                 sheet.Cells[$"M{index}"].Value = linha.SequenciaOver;
+                                sheet.Cells[$"N{index}"].Value = ((linha.OddOver * (linha.MediaTemporada > linha.Valor ? (linha.MediaTemporada - linha.Valor) * 3 : 1)) +
+                                                                 (auxMediaAdversario >= 0 ? (linha.OddOver * (auxMediaAdversario > linha.Valor ? (auxMediaAdversario - linha.Valor) * 4 : 1)) : 0) +
+                                                                 (auxMediaCasaOuFora >= 0 ? (linha.OddOver * (auxMediaCasaOuFora > linha.Valor ? (auxMediaCasaOuFora - linha.Valor) * 2 : 1)) : 0) +
+                                                                 (auxPercent5Over >= 0 ? (linha.OddOver * (auxPercent5Over * 0.4)) : 0) +
+                                                                 (auxPercent10Over >= 0 ? (linha.OddOver * (auxPercent10Over * 0.3)) : 0) +
+                                                                 (linha.OddOver * (auxPercentTemporadaOver * 0.2)) +
+                                                                 (linha.OddOver * auxSequenciaOver)).ToString("0.00");
 
                                 index++;
                             }
