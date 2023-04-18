@@ -7,142 +7,65 @@ namespace NBAStats.Classes
     public class PartidaJogador
     {
         private string mData;
-        private string mTime;
-        private string mAdversario;
-        private string mResultado;
-        private string mMinutos;
-        private int mFieldGoalsFeitos;
-        private int mFieldGoalsTentados;
-        private int mCestas3Feitas;
-        private int mCestas3Tentadas;
-        private double mCestas3Percentual;
-        private int mLancesLivresFeitos;
-        private int mLancesLivresTentados;
-        private double mLancesLivresPercentual;
-        private int mRebotes;
-        private int mAssistencias;
-        private int mBloqueios;
-        private int mRoubos;
-        private int mInversoesPosse;
-        private int mPontos;
-
-        public string Data
-        {
-            get { return Convert.ToDateTime(mData).ToString("dd/MM/yyyy"); }
-            set { mData = value; }
-        }
-
-        public string Time
-        {
-            get { return mTime; }
-            set { mTime = value; }
-        }
+        public string auxAdversario { get; set; }
+        public string auxCestas2 { get; set; }
+        public string auxCestas3 { get; set; }
+        public string auxLancesLivres { get; set; }
+        public string Time { get; set; }
+        public string Resultado { get; set; }
+        public int Minutos { get; set; }        
+        public int Rebotes { get; set; }
+        public int Assistencias { get; set; }
+        public int Bloqueios { get; set; }
+        public int Roubos { get; set; }
+        public int Faltas { get; set; }
+        public int InversoesPosse { get; set; }
+        public int Pontos { get; set; }
 
         public string Adversario
         {
-            get { return mAdversario; }
-            set { mAdversario = value; }
+            get { return auxAdversario.Replace("vs", "").Replace("@", ""); }
         }
 
-        public string Resultado
+        public bool EmCasa
         {
-            get { return mResultado; }
-            set { mResultado = value; }
+            get { return auxAdversario.StartsWith("vs"); }
         }
 
-        public string Minutos
+        public string Data
         {
-            get { return mMinutos.Substring(0, mMinutos.IndexOf(":")); }
-            set { mMinutos = value; }
+            get { return Convert.ToDateTime(new DateTime(DateTime.Now.Year, Convert.ToInt32(mData.Substring(0, mData.IndexOf('/'))), Convert.ToInt32(mData.Substring(mData.IndexOf('/') + 1)))).ToString("dd/MM/yyyy"); }
+            set { mData = value; }
         }
 
-        public int FieldGoalsFeitos
+        public int Cestas2
         {
-            get { return (mFieldGoalsFeitos - mCestas3Feitas); }
-            set { mFieldGoalsFeitos = value; }
+            get { return (Convert.ToInt32(auxCestas2.Substring(0, auxCestas2.IndexOf('-'))) - Convert.ToInt32(auxCestas3.Substring(0, auxCestas3.IndexOf('-')))); }
         }
 
-        public int FieldGoalsTentados
+        public int Cestas2Tentativas
         {
-            get { return (mFieldGoalsTentados - mCestas3Tentadas); }
-            set { mFieldGoalsTentados = value; }
+            get { return (Convert.ToInt32(auxCestas2.Substring(auxCestas2.IndexOf('-') + 1)) - Convert.ToInt32(auxCestas3.Substring(auxCestas3.IndexOf('-') + 1))); }
         }
 
-        public double FieldGoalPercentual
+        public int Cestas3
         {
-            get { return Math.Round(((double)(mFieldGoalsFeitos * 100) / mFieldGoalsTentados), 1); }
+            get { return Convert.ToInt32(auxCestas3.Substring(0, auxCestas3.IndexOf('-'))); }
         }
 
-        public int Cestas3Feitas
+        public int Cestas3Tentativas
         {
-            get { return mCestas3Feitas; }
-            set { mCestas3Feitas = value; }
+            get { return Convert.ToInt32(auxCestas3.Substring(auxCestas3.IndexOf('-') + 1)); }
         }
 
-        public int Cestas3Tentadas
+        public int LancesLivres
         {
-            get { return mCestas3Tentadas; }
-            set { mCestas3Tentadas = value; }
+            get { return Convert.ToInt32(auxLancesLivres.Substring(0, auxLancesLivres.IndexOf('-'))); }
         }
 
-        public double Cestas3Percentual
+        public int LancesLivresTentativas
         {
-            get { return mCestas3Percentual * 100; }
-            set { mCestas3Percentual = value; }
-        }
-
-        public int LancesLivresFeitos
-        {
-            get { return mLancesLivresFeitos; }
-            set { mLancesLivresFeitos = value; }
-        }
-
-        public int LancesLivresTentados
-        {
-            get { return mLancesLivresTentados; }
-            set { mLancesLivresTentados = value; }
-        }
-
-        public double LancesLivresPercentual
-        {
-            get { return mLancesLivresPercentual * 100; }
-            set { mLancesLivresPercentual = value; }
-        }
-
-        public int Rebotes
-        {
-            get { return mRebotes; }
-            set { mRebotes = value; }
-        }
-
-        public int Assistencias
-        {
-            get { return mAssistencias; }
-            set { mAssistencias = value; }
-        }
-
-        public int Bloqueios
-        {
-            get { return mBloqueios; }
-            set { mBloqueios = value; }
-        }
-
-        public int Roubos
-        {
-            get { return mRoubos; }
-            set { mRoubos = value; }
-        }
-
-        public int InversoesPosse
-        {
-            get { return mInversoesPosse; }
-            set { mInversoesPosse = value; }
-        }
-
-        public int Pontos
-        {
-            get { return mPontos; }
-            set { mPontos = value; }
+            get { return Convert.ToInt32(auxLancesLivres.Substring(auxLancesLivres.IndexOf('-') + 1)); }
         }
 
         public bool DuploDuplo
@@ -167,27 +90,27 @@ namespace NBAStats.Classes
             {
                 int aux = 0;
 
-                if (mPontos >= 10)
+                if (Pontos >= 10)
                 {
                     aux++;
                 }
 
-                if (mAssistencias >= 10)
+                if (Assistencias >= 10)
                 {
                     aux++;
                 }
 
-                if (mRebotes >= 10)
+                if (Rebotes >= 10)
                 {
                     aux++;
                 }
 
-                if (mBloqueios >= 10)
+                if (Bloqueios >= 10)
                 {
                     aux++;
                 }
 
-                if (mRoubos >= 10)
+                if (Roubos >= 10)
                 {
                     aux++;
                 }
@@ -198,32 +121,32 @@ namespace NBAStats.Classes
 
         public int PontosAssistenciasRebotes
         {
-            get { return mPontos + mAssistencias + mRebotes; }
+            get { return Pontos + Assistencias + Rebotes; }
         }
 
         public int PontosAssistencias
         {
-            get { return mPontos + mAssistencias; }
+            get { return Pontos + Assistencias; }
         }
 
         public int PontosRebotes
         {
-            get { return mPontos + mRebotes; }
+            get { return Pontos + Rebotes; }
         }
 
         public int AssistenciasRebotes
         {
-            get { return mAssistencias + mRebotes; }
+            get { return Assistencias + Rebotes; }
         }
 
         public int RoubosBloqueios
         {
-            get { return mRoubos + mBloqueios; }
+            get { return Roubos + Bloqueios; }
         }
 
         public int PontosBloqueios
         {
-            get { return mPontos + mBloqueios; }
+            get { return Pontos + Bloqueios; }
         }
 
         public static PartidaJogador DictionaryDePara(Dictionary<string, string> dic)
@@ -233,7 +156,7 @@ namespace NBAStats.Classes
             foreach (var key in dic.Keys)
             {
                 PropertyInfo property = partida.GetType().GetProperty(key);
-                property.SetValue(partida, Convert.ChangeType(dic[key].Replace(".", ","), property.PropertyType), null);
+                property.SetValue(partida, Convert.ChangeType(dic[key], property.PropertyType), null);
             }
 
             return partida;

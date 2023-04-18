@@ -38,46 +38,6 @@
                 <asp:Label ID="lblNomeJogadorObrigatorio" runat="server" Text="O nome do jogador é obrigatório!" ForeColor="Red" Visible="false" />
             </asp:TableCell>
         </asp:TableRow>
-        <asp:TableRow>
-            <asp:TableCell>
-                <asp:Label ID="lblAdversario" runat="server" Text="Adversário: " />
-            </asp:TableCell>
-            <asp:TableCell>
-                <asp:DropDownList runat="server" ID="ddlAdversario">
-                    <asp:ListItem Selected="True" />
-                    <asp:ListItem Text="Atlanta Hawks" Value="ATL" />
-                    <asp:ListItem Text="Boston Celtics" Value="BOS" />
-                    <asp:ListItem Text="Brooklyn Nets" Value="BRK" />
-                    <asp:ListItem Text="Charlotte Hornets" Value="CHO" />
-                    <asp:ListItem Text="Chicago Bulls" Value="CHI" />
-                    <asp:ListItem Text="Cleveland Cavaliers" Value="CLE" />
-                    <asp:ListItem Text="Dallas Mavericks" Value="DAL" />
-                    <asp:ListItem Text="Denver Nuggets" Value="DEN" />
-                    <asp:ListItem Text="Detroit Pistons" Value="DET" />
-                    <asp:ListItem Text="Golden State Warriors" Value="GSW" />
-                    <asp:ListItem Text="Houston Rockets" Value="HOU" />
-                    <asp:ListItem Text="Indiana Pacers" Value="IND" />
-                    <asp:ListItem Text="Los Angeles Clippers" Value="LAC" />
-                    <asp:ListItem Text="Los Angeles Lakers" Value="LAL" />
-                    <asp:ListItem Text="Memphis Grizzlies" Value="MEM" />
-                    <asp:ListItem Text="Miami Heat" Value="MIA" />
-                    <asp:ListItem Text="Milwaukee Bucks" Value="MIL" />
-                    <asp:ListItem Text="Minnesota Timberwolves" Value="MIN" />
-                    <asp:ListItem Text="New Orleans Pelicans" Value="NOP" />
-                    <asp:ListItem Text="New York Knicks" Value="NYK" />
-                    <asp:ListItem Text="Oklahoma City Thunder" Value="OKC" />
-                    <asp:ListItem Text="Orlando Magic" Value="ORL" />
-                    <asp:ListItem Text="Philadelphia 76ers" Value="PHI" />
-                    <asp:ListItem Text="Phoenix Suns" Value="PHO" />
-                    <asp:ListItem Text="Portland Trail Blazers" Value="POR" />
-                    <asp:ListItem Text="Sacramento Kings" Value="SAC" />
-                    <asp:ListItem Text="San Antonio Spurs" Value="SAS" />
-                    <asp:ListItem Text="Toronto Raptors" Value="TOR" />
-                    <asp:ListItem Text="Utah Jazz" Value="UTA" />
-                    <asp:ListItem Text="Washington Wizards" Value="WAS" />
-                </asp:DropDownList>
-            </asp:TableCell>
-        </asp:TableRow>
     </asp:Table>
 
     <div>

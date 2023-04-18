@@ -8,6 +8,7 @@ namespace NBAStats.Classes
         public List<Linha> Linhas { get; set; }
         public List<LinhaAlternativa> LinhasAlternativas { get; set; }
         public HistoricoJogador Historico { get; set; }
+        public string Time { get; set; }
 
         public Jogador(string pNome)
         {
