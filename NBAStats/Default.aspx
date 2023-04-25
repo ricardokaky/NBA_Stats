@@ -1,74 +1,19 @@
 ﻿<%@ Page Title="NBA STATS" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Default.aspx.cs" Inherits="NBAStats._Default" %>
 
-<%@ Register TagPrefix="uc" TagName="Partidas" Src="~/Controles/ucPartidas.ascx" %>
-<%@ Register TagPrefix="uc" TagName="Medias" Src="~/Controles/ucMedias.ascx" %>
-
 <asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
     <asp:Table runat="server">
         <asp:TableRow>
             <asp:TableCell>
-                <asp:Label ID="lblQuantJogos" runat="server" Text="Quantidade de Jogos: " />
-            </asp:TableCell>
-            <asp:TableCell>
-                <asp:TextBox ID="txtQuantJogos" runat="server" Text="5" />
-            </asp:TableCell>
-            <asp:TableCell>
-                <asp:Label ID="lblQuantJogosObrigatorio" runat="server" Text="Informe uma quantidade de jogos válida!" ForeColor="Red" Visible="false" />
+                <asp:Button ID="butGerarPlanilha" runat="server" Text="Gerar Planilha" OnClick="butGerarPlanilha_Click" />
             </asp:TableCell>
         </asp:TableRow>
         <asp:TableRow>
             <asp:TableCell>
-                <asp:Label ID="lblMinMinutos" runat="server" Text="Mínimo de Minutos: " />
+                <asp:FileUpload ID="FileUploadControl" runat="server" class="multi" AllowMultiple="false" />
             </asp:TableCell>
             <asp:TableCell>
-                <asp:TextBox ID="txtMinMinutos" runat="server" />
-            </asp:TableCell>
-            <asp:TableCell>
-                <asp:Label ID="lblMinMinutosValido" runat="server" Text="Informe um mínimo de minutos válido!" ForeColor="Red" Visible="false" />
-            </asp:TableCell>
-        </asp:TableRow>
-        <asp:TableRow>
-            <asp:TableCell>
-                <asp:Label ID="lblNomeJogador" runat="server" Text="Nome Jogador:" />
-            </asp:TableCell>
-            <asp:TableCell>
-                <asp:TextBox ID="txtNomeJogador" runat="server" />
-            </asp:TableCell>
-            <asp:TableCell>
-                <asp:Label ID="lblNomeJogadorObrigatorio" runat="server" Text="O nome do jogador é obrigatório!" ForeColor="Red" Visible="false" />
+                <asp:Button ID="butUpload" runat="server" Text="Carregar Planilha" onclick="butUpload_Click" />
             </asp:TableCell>
         </asp:TableRow>
     </asp:Table>
-
-    <div>
-        <asp:Button ID="butProcurar" runat="server" Text="Procurar" OnClick="butProcurar_Click" />
-    </div>
-
-    <div>
-        <asp:Label runat="server" ID="lblTrocaTime" Text="O JOGADOR TROCOU DE TIME RECENTEMENTE!" ForeColor="Red" Visible="false" />
-    </div>
-
-    <asp:Label runat="server" ID="lblPartidasRecentes" Text="Partidas Recentes" Visible="false"/>
-
-    <uc:Partidas runat="server" ID="ucPartidas" Visible="false" />
-
-    <asp:Label runat="server" ID="lblMediasPartidasRecentes" Text="Médias Partidas Recentes" Visible="false"/>
-
-    <uc:Medias runat="server" ID="ucMedias" Visible="false" />
-
-    <asp:Label runat="server" ID="lblPartidasContraAdv" Visible="false" />
-
-    <uc:Partidas runat="server" ID="ucPartidasContraAdv" Visible="false" />
-
-    <asp:Label runat="server" ID="lblMediasContraAdv" Visible="false" />
-
-    <uc:Medias runat="server" ID="ucMediasContraAdv" Visible="false"/>
-
-    <div>
-        <asp:Label runat="server" ID="lblDoubleDouble" Text="Duplo Duplo" Visible="false" />
-    </div>
-
-    <div>
-        <asp:Label runat="server" ID="lblTripleDouble" Text="Triplo Duplo" Visible="false" />
-    </div>
 </asp:Content>

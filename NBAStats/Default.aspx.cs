@@ -11,6 +11,7 @@ using OfficeOpenXml;
 using OpenQA.Selenium.Firefox;
 using System.IO;
 using System.Diagnostics;
+using System.Web;
 
 namespace NBAStats
 {
@@ -22,30 +23,11 @@ namespace NBAStats
         private static List<Partida> Partidas;
         private static string UrlEspeciaisDeJogadores;
         private static string UrlAlternativasDeJogadores;
+        private static string UrlOutrasEspeciaisDeJogadores;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!IsPostBack)
-            {
-                try
-                {
-                    InstanciaDriver(false);
 
-                    ScrapBetano();
-
-                    ProcurarHistoricoJogadores();
-
-                    GerarPlanilha();
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
-                finally
-                {
-                    EncerraProcessos();
-                }
-            }
         }
 
         public void InstanciaDriver(bool eager)
@@ -91,6 +73,11 @@ namespace NBAStats
                     {
                         ProcurarOddsAlternativas();
                     }
+
+                    //if (!string.IsNullOrEmpty(UrlOutrasEspeciaisDeJogadores))
+                    //{
+                    //    ProcurarOddsOutrasEspeciais();
+                    //}
                 }
 
                 return;
@@ -147,6 +134,7 @@ namespace NBAStats
 
                 var abaEspeciais = abas.FirstOrDefault(x => x.GetAttribute("innerText") == "Especiais de jogadores");
                 var abaAlternativas = abas.FirstOrDefault(x => x.GetAttribute("innerText") == "Linhas alternativas de jogador");
+                var abaOutrasEspeciais = abas.FirstOrDefault(x => x.GetAttribute("innerText") == "Outras Especiais de Jogadores");
 
                 if (abaEspeciais != null)
                 {
@@ -156,6 +144,11 @@ namespace NBAStats
                 if (abaAlternativas != null)
                 {
                     UrlAlternativasDeJogadores = "https://br.betano.com/sport/basquete/eua/nba/17106/?bt=" + abas.IndexOf(abaAlternativas);
+                }
+
+                if (abaOutrasEspeciais != null)
+                {
+                    UrlOutrasEspeciaisDeJogadores = "https://br.betano.com/sport/basquete/eua/nba/17106/?bt=" + abas.IndexOf(abaOutrasEspeciais);
                 }
             }
         }
@@ -288,6 +281,57 @@ namespace NBAStats
             }
         }
 
+        private void ProcurarOddsOutrasEspeciais()
+        {
+            Browser.Navigate().GoToUrl(UrlOutrasEspeciaisDeJogadores);
+
+            var menuPartidas = Browser.FindElements(By.XPath("//div[@category='BASK']"));
+
+            foreach (var menu in menuPartidas)
+            {
+                var titulo = menu.FindElement(By.XPath(".//a[@class='event__header__title__link']")).GetAttribute("innerText");
+
+                var partida = Partidas.Find(x => x.Times == titulo.Replace("-", "x"));
+
+                if (partida == null)
+                {
+                    continue;
+                }
+
+                var eleLinhas = menu.FindElements(By.XPath(".//div[@class='markets__market']"));
+
+                foreach (IWebElement elLinha in eleLinhas)
+                {
+                    var nomeLinha = elLinha.FindElement(By.XPath(".//div[@class='markets__market__header__title']")).GetAttribute("innerText");
+
+                    if (nomeLinha.StartsWith("Marcador") || nomeLinha.StartsWith("Primeiro"))
+                    {
+                        continue;
+                    }
+
+                    var botoes = elLinha.FindElements(By.XPath(".//button[contains(@class, 'selections__selection')]"));
+
+                    var linhas = new List<Linha>();
+
+                    foreach (IWebElement botao in botoes)
+                    {
+                        var nomeJogador = botao.FindElement(By.XPath(".//span[@class='selections__selection__title']")).GetAttribute("innerText");
+
+                        if (!partida.Jogadores.Any(x => x.Nome == nomeJogador))
+                        {
+                            partida.Jogadores.Add(new Jogador(nomeJogador));
+                        }
+
+                        var odd = Convert.ToDouble(botao.FindElement(By.XPath(".//span[@class='selections__selection__odd']")).GetAttribute("innerText").Replace(".", ",").Trim());
+
+                        linhas.Add(new Linha(nomeLinha, 0, odd, 0));
+                        
+                        //partida.Jogadores.Find(x => x.Nome == nomeJogador).LinhasAlternativas.Add(new LinhaAlternativa(nomeLinha, linhas));
+                    }
+                }
+            }
+        }
+
         public void ProcurarHistoricoJogadores()
         {
             try
@@ -373,31 +417,100 @@ namespace NBAStats
             return nomeTratado.Replace(" ", "%20").Replace("-", "%20").Trim();
         }
 
-        protected void butProcurar_Click(object sender, EventArgs e)
+        protected void butGerarPlanilha_Click(object sender, EventArgs e)
         {
-            lblQuantJogosObrigatorio.Visible = false;
-            lblMinMinutosValido.Visible = false;
+            try
+            {
+                InstanciaDriver(false);
 
-            var quantJogos = txtQuantJogos.Text;
+                ScrapBetano();
 
-            if (string.IsNullOrEmpty(quantJogos) || quantJogos.Any(x => char.IsLetter(x)))
-            {
-                lblQuantJogosObrigatorio.Visible = true;
-                return;
-            }
-            else
-            {
-                lblQuantJogosObrigatorio.Visible = false;
-            }
+                ProcurarHistoricoJogadores();
 
-            if (txtMinMinutos.Text.Any(x => char.IsLetter(x)))
-            {
-                lblMinMinutosValido.Visible = true;
-                return;
+                GerarPlanilha();
             }
-            else
+            catch (Exception ex)
             {
-                lblMinMinutosValido.Visible = false;
+                throw ex;
+            }
+            finally
+            {
+                EncerraProcessos();
+            }
+        }
+
+        protected void butUpload_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (FileUploadControl.HasFile && Request.Files[0].ContentLength > 0)
+                {
+                    HttpPostedFile hpf = Request.Files[0];
+
+                    string pth = @"C:\Users\ricardo.queiroz\Downloads\Planilha Anterior.xls";
+
+                    if (File.Exists(pth))
+                    {
+                        File.Delete(pth);
+                    }
+
+                    hpf.SaveAs(pth);
+
+                    ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+                    FileInfo planilha = new FileInfo(pth);
+
+                    InstanciaDriver(false);
+
+                    using (var package = new ExcelPackage(planilha))
+                    {
+                        var sheet = package.Workbook.Worksheets[0];
+
+                        sheet.RowZeroHeight = true;
+
+                        List<Jogador> lstJogadores = new List<Jogador>();
+
+                        for (int i = 2; i < sheet.Dimension.End.Row; i++)
+                        {
+                            var nomeJogador = sheet.GetValue(i, 2);
+
+                            if (nomeJogador == null)
+                            {
+                                break;
+                            }
+
+                            if (lstJogadores.Find(x => x.Nome == nomeJogador.ToString()) != null)
+                            {
+                                continue;
+                            }
+
+                            var jogador = new Jogador(nomeJogador.ToString());
+
+                            Browser.Navigate().GoToUrl("https://www.espn.com/search/_/type/players/q/" + TratarNomeJogador(jogador.Nome));
+
+                            string href = Browser.FindElement(By.XPath("//a[contains(@class, 'LogoTile')]")).GetAttribute("href");
+
+                            string url = href.Insert(href.IndexOf("_/"), "gamelog/");
+
+                            if (!AcessarPaginaJogador(url) || !ProcurarStatsJogador())
+                            {
+                                return;
+                            }
+
+                            ProcessarStats(jogador, true);
+
+                            lstJogadores.Add(jogador);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                EncerraProcessos();
             }
         }
 
@@ -412,12 +525,15 @@ namespace NBAStats
 
         private bool ProcurarStatsJogador()
         {
-            JogadorStats = new List<HtmlNode>(JogadorHtml.DocumentNode.SelectNodes("//div[@class='mb5']//tr[@class='Table__TR Table__TR--sm Table__even' or @class='filled Table__TR Table__TR--sm Table__even']").ToList());
+            JogadorStats = new List<HtmlNode>(JogadorHtml.DocumentNode.SelectNodes("//div[@class='mb5']//tr[@class='Table__TR Table__TR--sm Table__even' or " +
+                "                                                                                           @class='filled Table__TR Table__TR--sm Table__even' or " +
+                "                                                                                           @class='bwb-0 Table__TR Table__TR--sm Table__even' or " +
+                "                                                                                           @class='filled bwb-0 Table__TR Table__TR--sm Table__even']").ToList());
 
             return JogadorStats.Count > 0;
         }
 
-        private void ProcessarStats(Jogador jogador)
+        private void ProcessarStats(Jogador jogador, bool ultimaPartida = false)
         {
             jogador.Historico = new HistoricoJogador();
             jogador.Historico.Partidas.Clear();
@@ -427,11 +543,21 @@ namespace NBAStats
             {
                 var lstNodes = node.ChildNodes.Where(x => x.Name == "td").ToList();
 
+                if (lstNodes[1].InnerText.Contains("*"))
+                {
+                    continue;
+                }
+
                 lstNodes.RemoveAt(5);
                 lstNodes.RemoveAt(6);
                 lstNodes.RemoveAt(7);
 
                 jogador.Historico.Partidas.Add(ProcessarPartida(lstNodes));
+
+                if (ultimaPartida)
+                {
+                    break;
+                }
             }
         }
 
@@ -916,13 +1042,7 @@ namespace NBAStats
                                 sheet.Cells[$"K{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasOver.ToString() + "%";
                                 sheet.Cells[$"L{index}"].Value = auxPercentTemporadaOver.ToString("0.00") + "%";
                                 sheet.Cells[$"M{index}"].Value = auxSequenciaOver;
-                                sheet.Cells[$"N{index}"].Value = ((oddOver * (mediaTemporada > valorLinha ? (mediaTemporada - valorLinha) * 3 : 1)) +
-                                                                 (auxMediaAdversario >= 0 ? (oddOver * (auxMediaAdversario > valorLinha ? (auxMediaAdversario - valorLinha) * 4 : 1)) : 0) +
-                                                                 (auxMediaCasaOuFora >= 0 ? (oddOver * (auxMediaCasaOuFora > valorLinha ? (auxMediaCasaOuFora - valorLinha) * 2 : 1)) : 0) +
-                                                                 (auxPercent5Over >= 0 ? (oddOver * (auxPercent5Over * 0.4)) : 0) +
-                                                                 (auxPercent10Over >= 0 ? (oddOver * (auxPercent10Over * 0.3)) : 0) +
-                                                                 (oddOver * (auxPercentTemporadaOver * 0.2)) +
-                                                                 (oddOver * auxSequenciaOver)).ToString("0.00");
+                                sheet.Cells[$"N{index}"].Value = AvaliacaoAposta(Partidas[i].Jogadores[i2].Linhas[i3], true).ToString("0.00");
 
                                 index++;
 
@@ -939,13 +1059,7 @@ namespace NBAStats
                                 sheet.Cells[$"K{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasUnder.ToString() + "%";
                                 sheet.Cells[$"L{index}"].Value = auxPercentTemporadaUnder.ToString("0.00") + "%";
                                 sheet.Cells[$"M{index}"].Value = auxSequenciaUnder;
-                                sheet.Cells[$"N{index}"].Value = ((oddUnder * (mediaTemporada < valorLinha ? (valorLinha - mediaTemporada) * 3 : 1)) +
-                                                                 (auxMediaAdversario >= 0 ? (oddUnder * (auxMediaAdversario < valorLinha ? (valorLinha - auxMediaAdversario) * 4 : 1)) : 0) +
-                                                                 (auxMediaCasaOuFora >= 0 ? (oddUnder * (auxMediaCasaOuFora < valorLinha ? (valorLinha - auxMediaCasaOuFora) * 2 : 1)) : 0) +
-                                                                 (auxPercent5Under >= 0 ? (oddUnder * (auxPercent5Under * 0.4)) : 0) +
-                                                                 (auxPercent10Under >= 0 ? (oddUnder * (auxPercent10Under * 0.3)) : 0) +
-                                                                 (oddUnder * (auxPercentTemporadaUnder * 0.2)) +
-                                                                 (oddUnder * auxSequenciaUnder)).ToString("0.00");
+                                sheet.Cells[$"N{index}"].Value = AvaliacaoAposta(Partidas[i].Jogadores[i2].Linhas[i3], false).ToString("0.00");
                             }
                             else
                             {
@@ -957,10 +1071,7 @@ namespace NBAStats
                                 sheet.Cells[$"K{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasOver.ToString() + "%";
                                 sheet.Cells[$"L{index}"].Value = auxPercentTemporadaOver.ToString("0.00") + "%";
                                 sheet.Cells[$"M{index}"].Value = auxSequenciaOver;
-                                sheet.Cells[$"N{index}"].Value = ((auxPercent5Over >= 0 ? (oddOver * (auxPercent5Over * 0.4)) : 0) +
-                                                                 (auxPercent10Over >= 0 ? (oddOver * (auxPercent10Over * 0.3)) : 0) +
-                                                                 (oddOver * (auxPercentTemporadaOver * 0.2)) +
-                                                                 (oddOver * auxSequenciaOver)).ToString("0.00");
+                                sheet.Cells[$"N{index}"].Value = "";
 
                                 index++;
 
@@ -973,10 +1084,7 @@ namespace NBAStats
                                 sheet.Cells[$"K{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasUnder.ToString() + "%";
                                 sheet.Cells[$"L{index}"].Value = auxPercentTemporadaUnder.ToString("0.00") + "%";
                                 sheet.Cells[$"M{index}"].Value = auxSequenciaUnder;
-                                sheet.Cells[$"N{index}"].Value = ((auxPercent5Under >= 0 ? (oddUnder * (auxPercent5Under * 0.4)) : 0) +
-                                                                 (auxPercent10Under >= 0 ? (oddUnder * (auxPercent10Under * 0.3)) : 0) +
-                                                                 (oddUnder * (auxPercentTemporadaUnder * 0.2)) +
-                                                                 (oddUnder * auxSequenciaUnder)).ToString("0.00");
+                                sheet.Cells[$"N{index}"].Value = "";
                             }
 
                             index++;
@@ -1030,13 +1138,7 @@ namespace NBAStats
                                 sheet.Cells[$"K{index}"].Value = linha.Percent10PartidasOver.ToString() + "%";
                                 sheet.Cells[$"L{index}"].Value = linha.PercentTemporadaOver.ToString("0.00") + "%";
                                 sheet.Cells[$"M{index}"].Value = linha.SequenciaOver;
-                                sheet.Cells[$"N{index}"].Value = ((linha.OddOver * (linha.MediaTemporada > linha.Valor ? (linha.MediaTemporada - linha.Valor) * 3 : 1)) +
-                                                                 (auxMediaAdversario >= 0 ? (linha.OddOver * (auxMediaAdversario > linha.Valor ? (auxMediaAdversario - linha.Valor) * 4 : 1)) : 0) +
-                                                                 (auxMediaCasaOuFora >= 0 ? (linha.OddOver * (auxMediaCasaOuFora > linha.Valor ? (auxMediaCasaOuFora - linha.Valor) * 2 : 1)) : 0) +
-                                                                 (auxPercent5Over >= 0 ? (linha.OddOver * (auxPercent5Over * 0.4)) : 0) +
-                                                                 (auxPercent10Over >= 0 ? (linha.OddOver * (auxPercent10Over * 0.3)) : 0) +
-                                                                 (linha.OddOver * (auxPercentTemporadaOver * 0.2)) +
-                                                                 (linha.OddOver * auxSequenciaOver)).ToString("0.00");
+                                sheet.Cells[$"N{index}"].Value = AvaliacaoAposta(linha, true).ToString("0.00");
 
                                 index++;
                             }
@@ -1046,6 +1148,54 @@ namespace NBAStats
 
                 package.Save();
             }
+        }
+
+        public double AvaliacaoAposta(Linha linha, bool over)
+        {
+            double odd = over ? linha.OddOver * 0.15 : linha.OddUnder * 0.15;
+
+            bool mediaTemporadaAFavor = over ? (linha.MediaTemporada >= linha.Valor) : (linha.MediaTemporada <= linha.Valor);
+            double mediaTemporada = mediaTemporadaAFavor ? linha.MediaTemporada * 0.25 : linha.MediaTemporada * 0.20;
+
+            double? mediaCasaFora = 0;
+            if (linha.MediaCasaOuFora != null)
+            {
+                bool mediaCasaForaAFavor = over ? (linha.MediaCasaOuFora >= linha.Valor) : (linha.MediaCasaOuFora <= linha.Valor);
+                mediaCasaFora = mediaCasaForaAFavor ? linha.MediaCasaOuFora * 0.20 : linha.MediaCasaOuFora * 0.15;
+            }
+
+            double? mediaAdversario = 0;
+            if (linha.MediaAdversario != null)
+            {
+                bool mediaAdversarioAFavor = over ? (linha.MediaAdversario >= linha.Valor) : (linha.MediaAdversario <= linha.Valor);
+                mediaAdversario = mediaAdversarioAFavor ? linha.MediaAdversario * 0.15 : linha.MediaAdversario * 0.10;
+            }
+
+            double? percent5 = 0;
+            if (over && linha.Percent5PartidasOver != null)
+            {
+                percent5 = linha.Percent5PartidasOver * 0.20;
+            }
+            else if (!over && linha.Percent5PartidasUnder != null)
+            {
+                percent5 = linha.Percent5PartidasUnder * 0.20;
+            }
+
+            double? percent10 = 0;
+            if (over && linha.Percent10PartidasOver != null)
+            {
+                percent10 = linha.Percent10PartidasOver * 0.15;
+            }
+            else if (!over && linha.Percent10PartidasUnder != null)
+            {
+                percent10 = linha.Percent10PartidasUnder * 0.15;
+            }
+
+            double percentTemp = over ? linha.PercentTemporadaOver * 0.10 : linha.PercentTemporadaUnder * 0.10;
+
+            double sequencia = over ? linha.SequenciaOver * 0.05 : linha.SequenciaUnder * 0.05;
+
+            return Convert.ToDouble(odd + mediaTemporada + mediaCasaFora + mediaAdversario + percent5 + percent10 + percentTemp + sequencia);
         }
 
         private void EncerraProcessos()
