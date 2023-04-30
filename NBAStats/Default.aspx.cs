@@ -325,7 +325,7 @@ namespace NBAStats
                         var odd = Convert.ToDouble(botao.FindElement(By.XPath(".//span[@class='selections__selection__odd']")).GetAttribute("innerText").Replace(".", ",").Trim());
 
                         linhas.Add(new Linha(nomeLinha, 0, odd, 0));
-                        
+
                         //partida.Jogadores.Find(x => x.Nome == nomeJogador).LinhasAlternativas.Add(new LinhaAlternativa(nomeLinha, linhas));
                     }
                 }
@@ -1152,23 +1152,33 @@ namespace NBAStats
 
         public double AvaliacaoAposta(Linha linha, bool over)
         {
-            double odd = over ? linha.OddOver * 0.15 : linha.OddUnder * 0.15;
+            double maiorMedia;
+            double percentDif;
+            bool mediaAFavor;
 
-            bool mediaTemporadaAFavor = over ? (linha.MediaTemporada >= linha.Valor) : (linha.MediaTemporada <= linha.Valor);
-            double mediaTemporada = mediaTemporadaAFavor ? linha.MediaTemporada * 0.25 : linha.MediaTemporada * 0.20;
+            double odd = over ? linha.OddOver : linha.OddUnder;
+
+            maiorMedia = Math.Max(linha.MediaTemporada, linha.Valor);
+            percentDif = Math.Abs(((linha.MediaTemporada - linha.Valor) / maiorMedia) * 100);
+            mediaAFavor = over ? (linha.MediaTemporada >= linha.Valor) : (linha.MediaTemporada <= linha.Valor);
+            double mediaTemporada = mediaAFavor ? percentDif * 0.25 : percentDif * 0.20;
 
             double? mediaCasaFora = 0;
             if (linha.MediaCasaOuFora != null)
             {
-                bool mediaCasaForaAFavor = over ? (linha.MediaCasaOuFora >= linha.Valor) : (linha.MediaCasaOuFora <= linha.Valor);
-                mediaCasaFora = mediaCasaForaAFavor ? linha.MediaCasaOuFora * 0.20 : linha.MediaCasaOuFora * 0.15;
+                maiorMedia = Math.Max((double)linha.MediaCasaOuFora, linha.Valor);
+                percentDif = Math.Abs((((double)linha.MediaCasaOuFora - linha.Valor) / maiorMedia) * 100);
+                mediaAFavor = over ? (linha.MediaCasaOuFora >= linha.Valor) : (linha.MediaCasaOuFora <= linha.Valor);
+                mediaCasaFora = mediaAFavor ? percentDif * 0.20 : percentDif * 0.15;
             }
 
             double? mediaAdversario = 0;
             if (linha.MediaAdversario != null)
             {
-                bool mediaAdversarioAFavor = over ? (linha.MediaAdversario >= linha.Valor) : (linha.MediaAdversario <= linha.Valor);
-                mediaAdversario = mediaAdversarioAFavor ? linha.MediaAdversario * 0.15 : linha.MediaAdversario * 0.10;
+                maiorMedia = Math.Max((double)linha.MediaAdversario, linha.Valor);
+                percentDif = Math.Abs((((double)linha.MediaAdversario - linha.Valor) / maiorMedia) * 100);
+                mediaAFavor = over ? (linha.MediaAdversario >= linha.Valor) : (linha.MediaAdversario <= linha.Valor);
+                mediaAdversario = mediaAFavor ? percentDif * 0.15 : percentDif * 0.10;
             }
 
             double? percent5 = 0;
