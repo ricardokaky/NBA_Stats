@@ -1030,6 +1030,16 @@ namespace NBAStats
                                     auxPercent10Over = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasOver);
                                 }
 
+                                if (Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasUnder != null)
+                                {
+                                    auxPercent5Under = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasUnder);
+                                }
+
+                                if (Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasUnder != null)
+                                {
+                                    auxPercent10Under = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasUnder);
+                                }
+
                                 sheet.Cells[$"A{index}"].Value = Partidas[i].Times;
                                 sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
                                 sheet.Cells[$"C{index}"].Value = nomeLinha;
@@ -1038,8 +1048,8 @@ namespace NBAStats
                                 sheet.Cells[$"G{index}"].Value = mediaTemporada.ToString("0.00");
                                 sheet.Cells[$"H{index}"].Value = mediaAdversario;
                                 sheet.Cells[$"I{index}"].Value = mediaCasaOuFora;
-                                sheet.Cells[$"J{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasOver.ToString() + "%";
-                                sheet.Cells[$"K{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasOver.ToString() + "%";
+                                sheet.Cells[$"J{index}"].Value = auxPercent5Over.ToString() + "%";
+                                sheet.Cells[$"K{index}"].Value = auxPercent10Over.ToString() + "%";
                                 sheet.Cells[$"L{index}"].Value = auxPercentTemporadaOver.ToString("0.00") + "%";
                                 sheet.Cells[$"M{index}"].Value = auxSequenciaOver;
                                 sheet.Cells[$"N{index}"].Value = AvaliacaoAposta(Partidas[i].Jogadores[i2].Linhas[i3], true).ToString("0.00");
@@ -1055,8 +1065,8 @@ namespace NBAStats
                                 sheet.Cells[$"G{index}"].Value = mediaTemporada.ToString("0.00");
                                 sheet.Cells[$"H{index}"].Value = mediaAdversario;
                                 sheet.Cells[$"I{index}"].Value = mediaCasaOuFora;
-                                sheet.Cells[$"J{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasUnder.ToString() + "%";
-                                sheet.Cells[$"K{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasUnder.ToString() + "%";
+                                sheet.Cells[$"J{index}"].Value = auxPercent5Under.ToString() + "%";
+                                sheet.Cells[$"K{index}"].Value = auxPercent10Under.ToString() + "%";
                                 sheet.Cells[$"L{index}"].Value = auxPercentTemporadaUnder.ToString("0.00") + "%";
                                 sheet.Cells[$"M{index}"].Value = auxSequenciaUnder;
                                 sheet.Cells[$"N{index}"].Value = AvaliacaoAposta(Partidas[i].Jogadores[i2].Linhas[i3], false).ToString("0.00");
@@ -1067,8 +1077,8 @@ namespace NBAStats
                                 sheet.Cells[$"B{index}"].Value = Partidas[i].Jogadores[i2].Nome;
                                 sheet.Cells[$"C{index}"].Value = nomeLinha;
                                 sheet.Cells[$"F{index}"].Value = oddOver.ToString().Replace(".", ",");
-                                sheet.Cells[$"J{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasOver.ToString() + "%";
-                                sheet.Cells[$"K{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasOver.ToString() + "%";
+                                sheet.Cells[$"J{index}"].Value = auxPercent5Over.ToString() + "%";
+                                sheet.Cells[$"K{index}"].Value = auxPercent10Over.ToString() + "%";
                                 sheet.Cells[$"L{index}"].Value = auxPercentTemporadaOver.ToString("0.00") + "%";
                                 sheet.Cells[$"M{index}"].Value = auxSequenciaOver;
                                 sheet.Cells[$"N{index}"].Value = "";
@@ -1080,8 +1090,8 @@ namespace NBAStats
                                 sheet.Cells[$"C{index}"].Value = nomeLinha;
                                 sheet.Cells[$"E{index}"].Value = "SIM";
                                 sheet.Cells[$"F{index}"].Value = oddUnder.ToString().Replace(".", ",");
-                                sheet.Cells[$"J{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasUnder.ToString() + "%";
-                                sheet.Cells[$"K{index}"].Value = Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasUnder.ToString() + "%";
+                                sheet.Cells[$"J{index}"].Value = auxPercent5Under.ToString() + "%";
+                                sheet.Cells[$"K{index}"].Value = auxPercent10Under.ToString() + "%";
                                 sheet.Cells[$"L{index}"].Value = auxPercentTemporadaUnder.ToString("0.00") + "%";
                                 sheet.Cells[$"M{index}"].Value = auxSequenciaUnder;
                                 sheet.Cells[$"N{index}"].Value = "";
@@ -1134,8 +1144,8 @@ namespace NBAStats
                                     auxPercent10Over = Convert.ToDouble(linha.Percent10PartidasOver);
                                 }
 
-                                sheet.Cells[$"J{index}"].Value = linha.Percent5PartidasOver.ToString() + "%";
-                                sheet.Cells[$"K{index}"].Value = linha.Percent10PartidasOver.ToString() + "%";
+                                sheet.Cells[$"J{index}"].Value = auxPercent5Over.ToString() + "%";
+                                sheet.Cells[$"K{index}"].Value = auxPercent10Over.ToString() + "%";
                                 sheet.Cells[$"L{index}"].Value = linha.PercentTemporadaOver.ToString("0.00") + "%";
                                 sheet.Cells[$"M{index}"].Value = linha.SequenciaOver;
                                 sheet.Cells[$"N{index}"].Value = AvaliacaoAposta(linha, true).ToString("0.00");
@@ -1156,29 +1166,29 @@ namespace NBAStats
             double percentDif;
             bool mediaAFavor;
 
-            double odd = over ? linha.OddOver : linha.OddUnder;
+            double valorLinha = over ? linha.Valor + 0.5 : linha.Valor = 0.05;
 
-            maiorMedia = Math.Max(linha.MediaTemporada, linha.Valor);
-            percentDif = Math.Abs(((linha.MediaTemporada - linha.Valor) / maiorMedia) * 100);
-            mediaAFavor = over ? (linha.MediaTemporada >= linha.Valor) : (linha.MediaTemporada <= linha.Valor);
-            double mediaTemporada = mediaAFavor ? percentDif * 0.25 : percentDif * 0.20;
+            maiorMedia = Math.Max(linha.MediaTemporada, valorLinha);
+            percentDif = Math.Abs((linha.MediaTemporada - valorLinha) / maiorMedia * 100);
+            mediaAFavor = over ? (linha.MediaTemporada >= valorLinha) : (linha.MediaTemporada <= valorLinha);
+            double mediaTemporada = mediaAFavor ? percentDif * 0.25 : percentDif * -0.25;
 
             double? mediaCasaFora = 0;
             if (linha.MediaCasaOuFora != null)
             {
-                maiorMedia = Math.Max((double)linha.MediaCasaOuFora, linha.Valor);
-                percentDif = Math.Abs((((double)linha.MediaCasaOuFora - linha.Valor) / maiorMedia) * 100);
-                mediaAFavor = over ? (linha.MediaCasaOuFora >= linha.Valor) : (linha.MediaCasaOuFora <= linha.Valor);
-                mediaCasaFora = mediaAFavor ? percentDif * 0.20 : percentDif * 0.15;
+                maiorMedia = Math.Max((double)linha.MediaCasaOuFora, valorLinha);
+                percentDif = Math.Abs(((double)linha.MediaCasaOuFora - valorLinha) / maiorMedia * 100);
+                mediaAFavor = over ? (linha.MediaCasaOuFora >= valorLinha) : (linha.MediaCasaOuFora <= valorLinha);
+                mediaCasaFora = mediaAFavor ? percentDif * 0.20 : percentDif * -0.20;
             }
 
             double? mediaAdversario = 0;
             if (linha.MediaAdversario != null)
             {
-                maiorMedia = Math.Max((double)linha.MediaAdversario, linha.Valor);
-                percentDif = Math.Abs((((double)linha.MediaAdversario - linha.Valor) / maiorMedia) * 100);
-                mediaAFavor = over ? (linha.MediaAdversario >= linha.Valor) : (linha.MediaAdversario <= linha.Valor);
-                mediaAdversario = mediaAFavor ? percentDif * 0.15 : percentDif * 0.10;
+                maiorMedia = Math.Max((double)linha.MediaAdversario, valorLinha);
+                percentDif = Math.Abs(((double)linha.MediaAdversario - valorLinha) / maiorMedia * 100);
+                mediaAFavor = over ? (linha.MediaAdversario >= valorLinha) : (linha.MediaAdversario <= valorLinha);
+                mediaAdversario = mediaAFavor ? percentDif * 0.15 : percentDif * -0.15;
             }
 
             double? percent5 = 0;
@@ -1205,7 +1215,7 @@ namespace NBAStats
 
             double sequencia = over ? linha.SequenciaOver * 0.05 : linha.SequenciaUnder * 0.05;
 
-            return Convert.ToDouble(odd + mediaTemporada + mediaCasaFora + mediaAdversario + percent5 + percent10 + percentTemp + sequencia);
+            return Convert.ToDouble(mediaTemporada + mediaCasaFora + mediaAdversario + percent5 + percent10 + percentTemp + sequencia);
         }
 
         private void EncerraProcessos()
