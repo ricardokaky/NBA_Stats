@@ -23,7 +23,6 @@ namespace NBAStats
         private static List<Partida> Partidas;
         private static string UrlEspeciaisDeJogadores;
         private static string UrlAlternativasDeJogadores;
-        private static string UrlOutrasEspeciaisDeJogadores;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -73,11 +72,6 @@ namespace NBAStats
                     {
                         ProcurarOddsAlternativas();
                     }
-
-                    //if (!string.IsNullOrEmpty(UrlOutrasEspeciaisDeJogadores))
-                    //{
-                    //    ProcurarOddsOutrasEspeciais();
-                    //}
                 }
 
                 return;
@@ -134,7 +128,6 @@ namespace NBAStats
 
                 var abaEspeciais = abas.FirstOrDefault(x => x.GetAttribute("innerText") == "Especiais de jogadores");
                 var abaAlternativas = abas.FirstOrDefault(x => x.GetAttribute("innerText") == "Linhas alternativas de jogador");
-                var abaOutrasEspeciais = abas.FirstOrDefault(x => x.GetAttribute("innerText") == "Outras Especiais de Jogadores");
 
                 if (abaEspeciais != null)
                 {
@@ -144,11 +137,6 @@ namespace NBAStats
                 if (abaAlternativas != null)
                 {
                     UrlAlternativasDeJogadores = "https://br.betano.com/sport/basquete/eua/nba/17106/?bt=" + abas.IndexOf(abaAlternativas);
-                }
-
-                if (abaOutrasEspeciais != null)
-                {
-                    UrlOutrasEspeciaisDeJogadores = "https://br.betano.com/sport/basquete/eua/nba/17106/?bt=" + abas.IndexOf(abaOutrasEspeciais);
                 }
             }
         }
@@ -277,57 +265,6 @@ namespace NBAStats
                     }
 
                     partida.Jogadores.Find(x => x.Nome == nomeJogador).LinhasAlternativas.Add(new LinhaAlternativa(nomeLinha, linhas));
-                }
-            }
-        }
-
-        private void ProcurarOddsOutrasEspeciais()
-        {
-            Browser.Navigate().GoToUrl(UrlOutrasEspeciaisDeJogadores);
-
-            var menuPartidas = Browser.FindElements(By.XPath("//div[@category='BASK']"));
-
-            foreach (var menu in menuPartidas)
-            {
-                var titulo = menu.FindElement(By.XPath(".//a[@class='event__header__title__link']")).GetAttribute("innerText");
-
-                var partida = Partidas.Find(x => x.Times == titulo.Replace("-", "x"));
-
-                if (partida == null)
-                {
-                    continue;
-                }
-
-                var eleLinhas = menu.FindElements(By.XPath(".//div[@class='markets__market']"));
-
-                foreach (IWebElement elLinha in eleLinhas)
-                {
-                    var nomeLinha = elLinha.FindElement(By.XPath(".//div[@class='markets__market__header__title']")).GetAttribute("innerText");
-
-                    if (nomeLinha.StartsWith("Marcador") || nomeLinha.StartsWith("Primeiro"))
-                    {
-                        continue;
-                    }
-
-                    var botoes = elLinha.FindElements(By.XPath(".//button[contains(@class, 'selections__selection')]"));
-
-                    var linhas = new List<Linha>();
-
-                    foreach (IWebElement botao in botoes)
-                    {
-                        var nomeJogador = botao.FindElement(By.XPath(".//span[@class='selections__selection__title']")).GetAttribute("innerText");
-
-                        if (!partida.Jogadores.Any(x => x.Nome == nomeJogador))
-                        {
-                            partida.Jogadores.Add(new Jogador(nomeJogador));
-                        }
-
-                        var odd = Convert.ToDouble(botao.FindElement(By.XPath(".//span[@class='selections__selection__odd']")).GetAttribute("innerText").Replace(".", ",").Trim());
-
-                        linhas.Add(new Linha(nomeLinha, 0, odd, 0));
-
-                        //partida.Jogadores.Find(x => x.Nome == nomeJogador).LinhasAlternativas.Add(new LinhaAlternativa(nomeLinha, linhas));
-                    }
                 }
             }
         }
@@ -1166,7 +1103,7 @@ namespace NBAStats
             double percentDif;
             bool mediaAFavor;
 
-            double valorLinha = over ? linha.Valor + 0.5 : linha.Valor = 0.05;
+            double valorLinha = over ? linha.Valor + 0.5 : linha.Valor - 0.05;
 
             maiorMedia = Math.Max(linha.MediaTemporada, valorLinha);
             percentDif = Math.Abs((linha.MediaTemporada - valorLinha) / maiorMedia * 100);
