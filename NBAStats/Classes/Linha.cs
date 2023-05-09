@@ -18,6 +18,12 @@
         public double PercentTemporadaOver { get; set; }
         public double PercentTemporadaUnder { get; set; }
 
+        public Linha(string pNome, double pValor)
+        {
+            Nome = pNome;
+            Valor = pValor;
+        }
+
         public Linha(string pNome, double pValor, double pOddOver, double pOddUnder)
         {
             Nome = pNome;
