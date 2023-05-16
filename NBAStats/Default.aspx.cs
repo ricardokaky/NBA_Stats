@@ -1292,7 +1292,7 @@ namespace NBAStats
                 maiorMedia = Math.Max((double)linha.MediaCasaOuFora, valorLinha);
                 percentDif = Math.Abs(((double)linha.MediaCasaOuFora - valorLinha) / maiorMedia * 100);
                 mediaAFavor = over ? (linha.MediaCasaOuFora >= valorLinha) : (linha.MediaCasaOuFora <= valorLinha);
-                mediaCasaFora = mediaAFavor ? percentDif * 0.25 : percentDif * -0.25;
+                mediaCasaFora = mediaAFavor ? percentDif * 0.15 : percentDif * -0.15;
             }
 
             double? mediaAdversario = 0;
@@ -1301,17 +1301,17 @@ namespace NBAStats
                 maiorMedia = Math.Max((double)linha.MediaAdversario, valorLinha);
                 percentDif = Math.Abs(((double)linha.MediaAdversario - valorLinha) / maiorMedia * 100);
                 mediaAFavor = over ? (linha.MediaAdversario >= valorLinha) : (linha.MediaAdversario <= valorLinha);
-                mediaAdversario = mediaAFavor ? percentDif * 0.15 : percentDif * -0.15;
+                mediaAdversario = mediaAFavor ? percentDif * 0.20 : percentDif * -0.20;
             }
 
             double? percent5 = 0;
             if (over && linha.Percent5PartidasOver != null)
             {
-                percent5 = linha.Percent5PartidasOver * 0.10;
+                percent5 = linha.Percent5PartidasOver * 0.20;
             }
             else if (!over && linha.Percent5PartidasUnder != null)
             {
-                percent5 = linha.Percent5PartidasUnder * 0.10;
+                percent5 = linha.Percent5PartidasUnder * 0.20;
             }
 
             double? percent10 = 0;
@@ -1324,7 +1324,7 @@ namespace NBAStats
                 percent10 = linha.Percent10PartidasUnder * 0.15;
             }
 
-            double percentTemp = over ? linha.PercentTemporadaOver * 0.20 : linha.PercentTemporadaUnder * 0.10;
+            double percentTemp = over ? linha.PercentTemporadaOver * 0.10 : linha.PercentTemporadaUnder * 0.10;
 
             double sequencia = over ? linha.SequenciaOver * 0.05 : linha.SequenciaUnder * 0.05;
 
