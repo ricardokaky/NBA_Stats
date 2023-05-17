@@ -10,8 +10,9 @@ namespace NBAStats.Classes
         public string TimeFora { get; set; }
         public string Times { get { return TimeCasa + " x " + TimeFora; } }
         public List<Jogador> Jogadores { get; set; }
+        public string Url { get; set; }
 
-        public Partida(string pDataHora, string pTimeCasa, string pTimeFora)
+        public Partida(string pDataHora, string pTimeCasa, string pTimeFora, string pUrl)
         {
             var mes = Convert.ToInt32(pDataHora.Substring(pDataHora.IndexOf("/") + 1, 2));
             var dia = Convert.ToInt32(pDataHora.Substring(0, pDataHora.IndexOf("/")));
@@ -22,6 +23,7 @@ namespace NBAStats.Classes
             TimeCasa = pTimeCasa;
             TimeFora = pTimeFora;
             Jogadores = new List<Jogador>();
+            Url = pUrl;
         }
     }
 }
