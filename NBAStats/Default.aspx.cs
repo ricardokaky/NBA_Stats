@@ -338,7 +338,7 @@ namespace NBAStats
 
             Browser.Navigate().GoToUrl(partida.Url + "?bt=" + abas.IndexOf(abaEspeciais));
 
-            Browser.FindElement(By.XPath("//button[@class='tabs-navigation__actions__button icon--clickable']")).Click();
+            //Browser.FindElement(By.XPath("//button[@class='tabs-navigation__actions__button icon--clickable']")).Click();
 
             var linhas = Browser.FindElements(By.XPath("//div[@class='table-layout-container']"));
 
