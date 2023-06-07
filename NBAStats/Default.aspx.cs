@@ -1278,6 +1278,26 @@ namespace NBAStats
                             double auxPercentTemporadaUnder = Partidas[i].Jogadores[i2].Linhas[i3].PercentTemporadaUnder;
                             double auxSequenciaUnder = Partidas[i].Jogadores[i2].Linhas[i3].SequenciaUnder;
 
+                            if (Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasOver != null)
+                            {
+                                auxPercent5Over = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasOver);
+                            }
+
+                            if (Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasOver != null)
+                            {
+                                auxPercent10Over = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasOver);
+                            }
+
+                            if (Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasUnder != null)
+                            {
+                                auxPercent5Under = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasUnder);
+                            }
+
+                            if (Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasUnder != null)
+                            {
+                                auxPercent10Under = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasUnder);
+                            }
+
                             if (nomeLinha != "Double Double" && nomeLinha != "Triple Double")
                             {
                                 double valorLinha = Partidas[i].Jogadores[i2].Linhas[i3].Valor;
@@ -1297,26 +1317,6 @@ namespace NBAStats
                                 {
                                     auxMediaCasaOuFora = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].MediaCasaOuFora);
                                     mediaCasaOuFora = auxMediaCasaOuFora.ToString("0.00");
-                                }
-
-                                if (Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasOver != null)
-                                {
-                                    auxPercent5Over = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasOver);
-                                }
-
-                                if (Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasOver != null)
-                                {
-                                    auxPercent10Over = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasOver);
-                                }
-
-                                if (Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasUnder != null)
-                                {
-                                    auxPercent5Under = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].Percent5PartidasUnder);
-                                }
-
-                                if (Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasUnder != null)
-                                {
-                                    auxPercent10Under = Convert.ToDouble(Partidas[i].Jogadores[i2].Linhas[i3].Percent10PartidasUnder);
                                 }
 
                                 sheet.Cells[$"A{index}"].Value = Partidas[i].Times;
